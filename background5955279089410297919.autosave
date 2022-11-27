@@ -1,0 +1,16 @@
+
+class Background:
+    
+    # def __init__(self):        
+        # line(120, 80, 340, 80)
+        # stroke(126)
+        # line(340, 80, 340, 300)
+        # stroke(255)
+        # line(340, 300, 120, 300)
+        
+    def display(self):
+        square(0, 0, 0, 800)
+        stroke(126)
+
+        line(67, 0, 67, 800)
+        stroke(126)
