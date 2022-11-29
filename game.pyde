@@ -1,7 +1,7 @@
 from main import MainGame
 from background import Background
 
-game = MainGame(800)
+game = MainGame(282, 800)
 bg = None
 
 def setup():
@@ -10,9 +10,9 @@ def setup():
 
 def draw():
     try:
-        background(loadImage("back.jpg"))
+        background(loadImage("./imgs/back.jpg"))
 
-        Background().display()
+        Background().display(game.game_page)
         game.run_game()        
 
     except Exception as error:
@@ -21,3 +21,9 @@ def draw():
 
 def keyPressed():
     game.key_pressed(key, keyCode)
+
+def mousePressed():
+    game.mouse_pressed(mouseX, mouseY)
+
+def mouseReleased():
+    game.mouse_released()
