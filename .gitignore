@@ -2,3 +2,17 @@ __pycache__/
 *.py[cod]
 *$py.class
 *.autosave
+
+# tests / coverage
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+venv/
+.venv/
+
+# packaging
+*.egg-info/
+build/
+dist/
