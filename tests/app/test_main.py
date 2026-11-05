@@ -9,7 +9,7 @@ import pytest
 
 from asdf_hero.ui import theme
 
-MAIN = os.path.join(os.path.dirname(__file__), os.pardir, "src", "main.py")
+MAIN = os.path.join(os.path.dirname(__file__), os.pardir, os.pardir, "src", "main.py")
 
 
 def run_script(monkeypatch, **env):

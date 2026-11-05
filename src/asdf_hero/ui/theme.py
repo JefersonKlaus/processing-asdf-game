@@ -1,6 +1,6 @@
 """Colors, font sizes and texts of the screen."""
 
-from asdf_hero.game.states import GamePage, Highlight
+from asdf_hero.game.states import GamePage, Hand, Highlight
 
 
 def rgb(r: int, g: int, b: int, a: int = 255) -> str:
@@ -25,10 +25,12 @@ LANE_COLORS = (
 )
 LETTER_FONT_SIZE = 45
 
-# gold letter (surprise challenge): gold color with a glow
+# challenges: gold letter and swapped letters (silver), with a glow
+GLOW_BLUR = 14
 GOLD_COLOR = rgb(255, 193, 7)
 GOLD_GLOW_COLOR = rgb(255, 215, 0, 180)
-GOLD_GLOW_BLUR = 14
+SILVER_COLOR = rgb(158, 158, 158)
+SILVER_GLOW_COLOR = rgb(192, 192, 192, 220)
 
 # --- action bar: color of each highlight (light colors, almost white) --------
 ACTION_BAR_COLORS = {
@@ -36,9 +38,10 @@ ACTION_BAR_COLORS = {
     Highlight.PRESSED: rgb(255, 249, 196, 220),  # light yellow
     Highlight.WRONG: rgb(255, 205, 210, 220),  # light red
 }
-# small and short vibration on each key press: horizontal offset (pixels) of
-# the bar on each frame (9 frames = 0.15s at 60 FPS)
-ACTION_BAR_SHAKE = (3, -3, 3, -3, 2, -2, 1, -1, 0)
+# on each key press the bar gets bigger (pixels on each side) for some
+# frames and then gets back to its size (8 frames = 0.13s at 60 FPS)
+ACTION_BAR_PULSE = 2
+ACTION_BAR_PULSE_FRAMES = 8
 
 # --- button -----------------------------------------------------------------
 BUTTON_COLOR = rgb(0, 0, 0)
@@ -48,6 +51,11 @@ BUTTON_FONT_SIZE = 24
 BUTTON_TEXTS = {
     GamePage.START: "Iniciar ASDF Hero",
     GamePage.GAME_OVER: "Falhar novamente",
+}
+HAND_BUTTON_FONT_SIZE = 18
+HAND_BUTTON_TEXTS = {
+    Hand.LEFT: "Mão esquerda: ASDF",
+    Hand.RIGHT: "Mão direita: JKLÇ",
 }
 
 # --- points and game over ---------------------------------------------------

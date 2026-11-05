@@ -1,3 +1,5 @@
+"""BackgroundView: lanes (running) and the game over banner."""
+
 import flet as ft
 import pytest
 

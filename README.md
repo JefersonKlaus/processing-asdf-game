@@ -7,6 +7,16 @@ Project developed as an activity at Feevale University in the field of Computer 
 ![Game](./docs/demo3.png)
 
 ### How to play
+On the start page (and on the game over page), choose the hand with the button
+below **Iniciar ASDF Hero** / **Falhar novamente**:
+
+| Hand | Keys (one for each lane, from left to right) |
+| --- | --- |
+| Left (default) | `A` `S` `D` `F` |
+| Right | `J` `K` `L` `Ç` (on US keyboards the `Ç` key is `;`, it works too) |
+
+The examples below use the left hand keys.
+
 Letters (`A`, `S`, `D`, `F`) fall down four lanes. Press the matching key while
 the letter touches the white action bar to score a point (from the moment the
 circle touches the bar until it fully leaves it). Several letters
@@ -14,15 +24,22 @@ fall one after the other. The game starts slow; the more points you have, the
 faster the letters fall and the closer they get to each other. After 25 points
 the letters no longer match their lane.
 
-**Gold letter (from 50 points):** after a random number of letters (between 5
+**Gold letter (from 40 points):** after a random number of letters (between 5
 and 10), a surprise gold letter falls **twice as fast** as the others, on its
 own, between the normal letters. It must be pressed like any other letter
-(one point; missing it ends the game). It can pass a normal letter, so
+(missing it ends the game) and gives `GOLD_POINTS` points (1 by default). It can pass a normal letter, so
 sometimes there are two letters in the action bar: each key press hits one
 letter (the lowest one with that char).
 
-When you press `A`, `S`, `D` or `F` the action bar gives a small and short
-vibration and blinks:
+**Swap (from 50 points):** after a random number of letters (between 5 and
+10), a letter that looks normal swaps its char with the next letter when it is
+close to the action bar (100 px). Example: `A` (close to the bar) and `F` (the
+next one) -> the first letter shows `F` and the next shows `A`. Both letters
+turn **silver**, and you must press the new chars. Only the chars change, the
+letters stay in their lanes.
+
+When you press `A`, `S`, `D` or `F` the action bar gets 2 px bigger on each
+side for a moment and blinks:
 - **light yellow**: right press (the letter of that key is in the action bar);
 - **light red**: wrong press, the game is over (the red stays during the slow
   motion, so you can see why the game ended).
@@ -51,7 +68,11 @@ processing-asdf-game/
 │       ├── config.py            # ALL game settings (sizes, speeds, level, timings)
 │       ├── app.py               # Flet app: game loop (input -> update -> render)
 │       ├── game/                # game rules, no Flet
-│       │   ├── states.py        #   GamePage, LetterStatus, Highlight (enums)
+│       │   ├── challenges/      #   surprises after some points
+│       │   │   ├── base.py      #     Challenge (hooks) + ChallengeSchedule (5-10 letters)
+│       │   │   ├── gold.py      #     gold letter (faster)
+│       │   │   └── swap.py      #     two letters swap their chars (silver)
+│       │   ├── states.py        #   GamePage, Hand, LetterStatus, Highlight (enums)
 │       │   ├── game.py          #   Game: pages, points, letters, game over
 │       │   ├── letter.py        #   Letter: movement and status
 │       │   ├── action_bar.py    #   ActionBar: hit area and highlight
@@ -64,12 +85,12 @@ processing-asdf-game/
 │           ├── action_bar_view.py
 │           ├── background_view.py
 │           └── button_view.py
-└── tests/                       # same structure as the package
-    ├── conftest.py
-    ├── game/                    # rules (and the architecture rule)
+└── tests/                       # one responsibility per file (see "Tests")
+    ├── conftest.py              # shared fixtures
+    ├── helpers.py               # shared helpers (perfect player, frames...)
+    ├── game/                    # rules
     ├── ui/                      # views
-    ├── test_app.py
-    └── test_main.py
+    └── app/                     # Flet app and entry point
 ```
 
 ### How it works
@@ -139,12 +160,12 @@ All the numbers of the game are in `src/asdf_hero/config.py`, and the colors
 and texts are in `src/asdf_hero/ui/theme.py`.
 
 The game level depends on the points. It goes from the initial level (0
-points) to the max level (100 points):
+points) to the max level (max speed at 75 points, min distance at 100 points):
 
 | Setting | Constant (`config.py`) | Value | Effect |
 | --- | --- | --- | --- |
 | Initial speed | `INIT_SPEED` | `3` px per frame (180 px/s) | Speed at the start of a game |
-| Max speed | `MAX_SPEED` | `5` px per frame (300 px/s) | Fastest speed |
+| Max speed | `MAX_SPEED` | `4.5` px per frame (270 px/s) | Fastest speed |
 | Speed step | `SPEED_STEP_BY_POINT` | `0.02` px per point | Bigger = gets fast sooner |
 | Initial distance | `INIT_DISTANCE` | `150` px | Space between letters at the start |
 | Min distance | `MIN_DISTANCE` | `100` px | Smallest space between letters |
@@ -152,14 +173,26 @@ points) to the max level (100 points):
 | Highlight | `HIGHLIGHT_FRAMES` | `12` frames (0.2 s) | How long the action bar blinks |
 | Action bar | `ACTION_BAR_TOP` / `ACTION_BAR_HEIGHT` | `600` / `80` px | A letter can be pressed while its circle touches the bar (hit area of 142 px) |
 | Slow motion | `SLOW_MOTION_STEPS` / `SLOW_MOTION_STEP_FRAMES` | `13` / `12` | Game over transition (~2.8 s) |
-| Gold letter | `GOLD_FROM_POINTS` | `50` | Points to start the gold letters |
+| Gold letter | `GOLD_FROM_POINTS` | `40` | Points to start the gold letters |
 | Gold frequency | `GOLD_EVERY_MIN_LETTERS` / `GOLD_EVERY_MAX_LETTERS` | `5` / `10` | Random number of normal letters before each gold letter |
-| Gold speed | `GOLD_SPEED_FACTOR` | `2.0` | Gold speed = game speed x this (480 px/s at 50 points, 600 px/s at the max level) |
+| Gold speed | `GOLD_SPEED_FACTOR` | `2.0` | Gold speed = game speed x this (456 px/s at 40 points, 540 px/s at the max level) |
+| Gold points | `GOLD_POINTS` | `1` | Points for a gold letter (more points also make the game faster) |
+| Swap | `SWAP_FROM_POINTS` | `50` | Points to start the swap challenge |
+| Swap frequency | `SWAP_EVERY_MIN_LETTERS` / `SWAP_EVERY_MAX_LETTERS` | `5` / `10` | Random number of normal letters before each swap |
+| Swap distance | `SWAP_DISTANCE` | `100` px | The letters swap when the circle is this far from the action bar (0.37 s to react at the max speed) |
+| Swap points | `SWAP_POINTS` | `1` | Points for a silver (swapped) letter |
+| Keys | `LEFT_HAND_KEYS` / `RIGHT_HAND_KEYS` | `ASDF` / `JKLÇ` | Keys of each hand (one for each lane) |
+| Key names | `KEY_ALIASES` | `{";": "Ç"}` | Other names of the same key |
 
-The vibration of the action bar is `ACTION_BAR_SHAKE` in `ui/theme.py`: the
-horizontal offset (pixels) of the bar on each frame after a key press
-(`3, -3, 3, -3, 2, -2, 1, -1, 0`: 0.15 s). The gold colors are `GOLD_COLOR`
-and `GOLD_GLOW_COLOR`.
+In `ui/theme.py`: the press effect of the action bar is `ACTION_BAR_PULSE`
+(2 px bigger on each side) for `ACTION_BAR_PULSE_FRAMES` frames (8 = 0.13 s),
+the colors of the challenges are `GOLD_COLOR` / `GOLD_GLOW_COLOR` and
+`SILVER_COLOR` / `SILVER_GLOW_COLOR`, and the texts of the hand button are
+`HAND_BUTTON_TEXTS`.
+
+To add a new challenge: create a `Challenge` subclass in
+`game/challenges/` (with a `ChallengeSchedule`), and add it to
+`Game.challenges`.
 
 The normal letters move at the game speed, so they never overlap. The gold
 letter avoids the lanes of the letters that are still coming, so it does not
@@ -172,8 +205,8 @@ With these values, a perfect player sees:
 | --- | --- | --- | --- |
 | 0 s | 0 | 180 px/s | 1.2 s |
 | 30 s | ~26 | 211 px/s | 0.9 s |
-| 60 s | ~61 | 253 px/s | 0.7 s |
-| 90 s | ~110 (max level) | 300 px/s | 0.5 s |
+| 60 s | ~64 | 257 px/s | 0.7 s |
+| 90 s | ~116 (max level) | 270 px/s | 0.6 s |
 
 The max level is kept moderate on purpose, so new challenges can be added
 later. A new game always starts at the initial level. There is never more than
@@ -205,37 +238,65 @@ src/asdf_hero/config.py                  22      0   100%
 src/asdf_hero/ui/theme.py                23      0   100%
 src/main.py                               6      0   100%
 -------------------------------------------------------------------
-TOTAL                                   497      0   100%
+TOTAL                                   633      0   100%
 Required test coverage of 90.0% reached. Total coverage: 100.00%
-============================= 299 passed in 4.97s ==============================
+============================= 258 passed in 3.16s ==============================
 ```
 
 ### Useful commands
 | Command | What it does |
 | --- | --- |
 | `pytest` | Run all tests with coverage (fails below 90%) |
-| `pytest tests/game` | Run only the game rules tests |
+| `pytest tests/game` | Run only the game rules tests (or `tests/ui`, `tests/app`) |
 | `pytest -k highlight` | Run the tests whose name matches an expression |
 | `pytest -v` | Show the name of each test |
 | `pytest --cov-report=html` | Also build an HTML report in `htmlcov/index.html` |
 | `pytest --no-cov` | Run the tests without coverage (faster) |
 
 ### How the tests work
-| Folder / file | What it covers |
+Each test file has one responsibility:
+
+| File | What it checks |
 | --- | --- |
-| `tests/game/` | Rules: game, letters, action bar (highlight), button, level design, states |
-| `tests/game/test_gold.py` | Gold letter: when it comes, where it starts, speed, lanes, two letters in the bar |
-| `tests/game/test_architecture.py` | The rules do not import Flet or the views |
-| `tests/ui/` | Views: what each page shows, letters (gold), action bar colors and vibration, button, theme |
-| `tests/test_app.py` | Page setup, input queue, frame order, game loop (frame rate, errors, pause / close) |
-| `tests/test_main.py` | `python src/main.py` (server settings, assets) |
+| **`tests/game/`** | **Game rules (no Flet)** |
+| `test_architecture.py` | The rules do not import Flet or the views |
+| `test_design_rules.py` | The agreed design limits in `config.py` (speeds, gold, one letter in the bar...) |
+| `test_level.py` | Speed and distance by points |
+| `test_action_bar.py` | Hit area of the bar and its highlight |
+| `test_button.py` | Clickable area of a button |
+| `test_keys.py` | Keys of each hand and key names (`;` = `Ç`) |
+| `test_letter.py` | A letter: fall, status, key press |
+| `test_pages.py` | Start, game over and retry; a new game is clean |
+| `test_hand.py` | Hand choice (start and game over pages) |
+| `test_letter_flow.py` | New letters, spacing, movement, removal |
+| `test_key_press.py` | Result of a key press: points, game over, yellow / red bar |
+| `test_game_over.py` | Missed letter and the slow motion |
+| `test_challenge_base.py` | Challenge hooks and the schedule (from N points, after 5-10 letters) |
+| `test_gold_schedule.py` | When and where the gold letter appears |
+| `test_gold_letter.py` | Gold letter: speed, points, game over |
+| `test_swap.py` | Swap challenge: when, which letters, new chars, silver |
+| `test_full_game.py` | Whole games with a perfect player |
+| **`tests/ui/`** | **Flet views** |
+| `test_theme.py` | Color helper and the rules of colors / texts |
+| `test_letter_view.py` | Circles, char, colors of each status, gold / silver glow |
+| `test_action_bar_view.py` | Bar color and the press effect (2 px bigger) |
+| `test_button_view.py` | A button |
+| `test_background_view.py` | Lanes and the game over banner |
+| `test_game_view.py` | Layers and what each page shows (texts, buttons) |
+| `test_game_view_letters.py` | One view for each letter (kept, removed, gold on top) |
+| **`tests/app/`** | **Flet app** |
+| `test_page_setup.py` | Page settings, events, `main()` |
+| `test_input.py` | Keys / clicks are queued and applied by the game loop |
+| `test_game_loop.py` | Frame order (input -> update -> render), frame rate, slow frames, errors |
+| `test_lifecycle.py` | Tab connect / disconnect (pause) / close (stop) |
+| `test_main.py` | `python src/main.py` (server settings, assets) |
 
 - **Rules without mocks:** `Game` receives the random generator (`rng`), so
   the tests choose the lanes with `scripted_rng([...])` and put letters where
-  they want with the `place_letter` fixture.
+  they want with the `place_letter` fixture (`tests/conftest.py`).
 - **Views:** the Flet controls are plain Python objects, so the tests check
   their properties (`visible`, `top`, `bgcolor`, `content.value`...).
-- **Game loop timing** (frame rate, slow frames) is tested with a `FakeClock`
+- **Game loop timing** is tested with a `FakeClock` (`tests/app/fakes.py`)
   that only moves when the loop sleeps or a frame takes time. Real clocks are
   different on each OS (on Windows the asyncio clock moves in steps of
   ~15.6 ms), so these tests give the same result on Windows, Linux and macOS.

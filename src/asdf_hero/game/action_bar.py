@@ -22,9 +22,6 @@ class ActionBar:
     def bottom(self) -> float:
         return self.top + self.height
 
-    def contains(self, y: float) -> bool:
-        return self.top <= y <= self.bottom
-
     def touches(self, y: float, size: float) -> bool:
         """True when a circle of this size, centered at y, touches the bar."""
         radius = size / 2

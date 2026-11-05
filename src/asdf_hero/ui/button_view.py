@@ -1,4 +1,4 @@
-"""Shows the start / retry button."""
+"""Shows a button (start / retry, hand)."""
 
 import flet as ft
 
@@ -7,10 +7,10 @@ from asdf_hero.ui import theme
 
 
 class ButtonView:
-    def __init__(self, button: Button) -> None:
+    def __init__(self, button: Button, font_size: int = theme.BUTTON_FONT_SIZE) -> None:
         self.button = button
         self._label = ft.Text(
-            size=theme.BUTTON_FONT_SIZE, color=theme.BUTTON_TEXT_COLOR, no_wrap=True
+            size=font_size, color=theme.BUTTON_TEXT_COLOR, no_wrap=True
         )
         self.control = ft.Container(
             visible=False, alignment=ft.Alignment.CENTER, content=self._label

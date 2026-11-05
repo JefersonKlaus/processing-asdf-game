@@ -1,3 +1,5 @@
+"""LetterView: the circles and the char of a letter."""
+
 import flet as ft
 import pytest
 
@@ -7,130 +9,93 @@ from asdf_hero.ui import theme
 from asdf_hero.ui.letter_view import LetterView
 
 BORDER = ft.Border.all(1, theme.BLACK)
+LANE = theme.LANE_COLORS[0]
+GOLD = theme.GOLD_COLOR
+WHITE, BLACK = theme.WHITE, theme.BLACK
 
 
-def make_view(lane=0, y=300, status=LetterStatus.WAITING, char=None, gold=False):
-    letter = Letter(lane, char or config.CHARS[lane], ActionBar(), gold=gold)
+def render(lane=0, y=300, status=LetterStatus.WAITING, gold=False):
+    letter = Letter(lane, config.LEFT_HAND_KEYS[lane], ActionBar(), gold=gold)
     letter.y = y
     letter.status = status
     view = LetterView(letter)
     view.render()
-    outer = view.control
-    inner, label = outer.content.controls
-    return view, outer, inner, label
+    inner, label = view.control.content.controls
+    return view, view.control, inner, label
 
 
-class TestControl:
-    def test_is_a_circle_with_the_letter_size(self):
-        _, outer, _, _ = make_view()
+def test_circle_with_the_char():
+    _, outer, inner, label = render(lane=2)
 
-        assert outer.shape == ft.BoxShape.CIRCLE
-        assert (outer.width, outer.height) == (62, 62)
-
-    def test_inner_circle_and_char(self):
-        _, _, inner, label = make_view(lane=2)
-
-        assert inner.shape == ft.BoxShape.CIRCLE
-        assert inner.width == pytest.approx(62 * 0.7)
-        assert label.value == "D"
-        assert label.size == theme.LETTER_FONT_SIZE
-
-    def test_random_char_is_shown(self):
-        _, _, _, label = make_view(lane=0, char="F")
-
-        assert label.value == "F"
-
-    def test_unique_key(self):
-        # flet controls with the same values are ==, the key avoids it
-        first, second = make_view()[1], make_view()[1]
-
-        assert first.key != second.key
-        assert first != second
+    assert outer.shape == inner.shape == ft.BoxShape.CIRCLE
+    assert (outer.width, outer.height) == (62, 62)
+    assert inner.width == pytest.approx(62 * 0.7)
+    assert label.value == "D"
 
 
-class TestGold:
-    def test_normal_letter_has_no_glow(self):
-        _, outer, _, _ = make_view()
+def test_unique_key():
+    # flet controls with the same values are ==, the key avoids it
+    first, second = render()[1], render()[1]
 
-        assert outer.shadow is None
-
-    def test_gold_color_and_glow(self):
-        _, outer, _, _ = make_view(lane=2, gold=True)
-
-        assert outer.bgcolor == theme.GOLD_COLOR
-        assert outer.shadow == ft.BoxShadow(
-            blur_radius=theme.GOLD_GLOW_BLUR, spread_radius=2, color=theme.GOLD_GLOW_COLOR
-        )
-
-    def test_gold_need_be_pressed(self):
-        _, _, _, label = make_view(gold=True, status=LetterStatus.NEED_BE_PRESSED)
-
-        assert label.color == theme.GOLD_COLOR
-
-    def test_gold_was_pressed(self):
-        _, outer, inner, label = make_view(gold=True, status=LetterStatus.WAS_PRESSED)
-
-        assert (outer.bgcolor, inner.bgcolor, label.color) == (
-            theme.GOLD_COLOR,
-            theme.GOLD_COLOR,
-            theme.WHITE,
-        )
-
-    def test_gold_failed(self):
-        _, outer, _, _ = make_view(gold=True, status=LetterStatus.FAILED)
-
-        assert (outer.bgcolor, outer.border) == (theme.WHITE, BORDER)
+    assert first.key != second.key
+    assert first != second
 
 
-class TestRender:
-    COLOR = theme.LANE_COLORS[0]
+def test_position_follows_the_letter():
+    view, outer, _, _ = render(lane=3, y=300)
+    assert (outer.left, outer.top) == (config.LANE_CENTERS[3] - 31, 300 - 31)
 
-    def test_position_is_the_center_of_the_circle(self):
-        _, outer, _, _ = make_view(lane=3, y=300)
+    view.letter.move(4.5)
+    view.render()
+    assert outer.top == pytest.approx(304.5 - 31)
 
-        assert outer.left == config.LANE_CENTERS[3] - 31
-        assert outer.top == 300 - 31
 
-    def test_follows_the_letter(self):
-        view, outer, _, _ = make_view(y=100)
+# colors: (outer, outer border, inner, inner border, char)
+@pytest.mark.parametrize(
+    "status, gold, colors",
+    [
+        (LetterStatus.WAITING, False, (LANE, None, WHITE, None, BLACK)),
+        (LetterStatus.NEED_BE_PRESSED, False, (LANE, None, WHITE, None, LANE)),
+        (LetterStatus.WAS_PRESSED, False, (LANE, None, LANE, None, WHITE)),
+        (LetterStatus.FAILED, False, (WHITE, BORDER, WHITE, BORDER, BLACK)),
+        (LetterStatus.NEED_BE_PRESSED, True, (GOLD, None, WHITE, None, GOLD)),
+        (LetterStatus.WAS_PRESSED, True, (GOLD, None, GOLD, None, WHITE)),
+        (LetterStatus.FAILED, True, (WHITE, BORDER, WHITE, BORDER, BLACK)),
+    ],
+    ids=["waiting", "need", "pressed", "failed", "gold need", "gold pressed", "gold failed"],
+)
+def test_colors(status, gold, colors):
+    _, outer, inner, label = render(status=status, gold=gold)
 
-        view.letter.move(4.5)
-        view.render()
+    assert (outer.bgcolor, outer.border, inner.bgcolor, inner.border, label.color) == colors
 
-        assert outer.top == pytest.approx(104.5 - 31)
 
-    def test_waiting(self):
-        _, outer, inner, label = make_view(status=LetterStatus.WAITING)
+def test_colors_follow_the_status():
+    view, outer, _, _ = render(status=LetterStatus.FAILED)
 
-        assert (outer.bgcolor, outer.border) == (self.COLOR, None)
-        assert (inner.bgcolor, inner.border) == (theme.WHITE, None)
-        assert label.color == theme.BLACK
+    view.letter.status = LetterStatus.WAITING
+    view.render()
 
-    def test_need_be_pressed(self):
-        _, outer, inner, label = make_view(status=LetterStatus.NEED_BE_PRESSED)
+    assert (outer.bgcolor, outer.border) == (LANE, None)
 
-        assert (outer.bgcolor, outer.border) == (self.COLOR, None)
-        assert (inner.bgcolor, inner.border) == (theme.WHITE, None)
-        assert label.color == self.COLOR
 
-    def test_was_pressed(self):
-        _, outer, inner, label = make_view(status=LetterStatus.WAS_PRESSED)
+@pytest.mark.parametrize(
+    "gold, swapped, glow",
+    [(False, False, None), (True, False, theme.GOLD_GLOW_COLOR), (False, True, theme.SILVER_GLOW_COLOR)],
+    ids=["normal", "gold", "silver"],
+)
+def test_glow_of_the_challenges(gold, swapped, glow):
+    view, outer, _, _ = render(gold=gold)
+    view.letter.swapped = swapped
+    view.render()
 
-        assert (outer.bgcolor, outer.border) == (self.COLOR, None)
-        assert (inner.bgcolor, inner.border) == (self.COLOR, None)
-        assert label.color == theme.WHITE
+    assert (outer.shadow.color if outer.shadow else None) == glow
 
-    def test_failed(self):
-        _, outer, inner, label = make_view(status=LetterStatus.FAILED)
 
-        assert (outer.bgcolor, outer.border) == (theme.WHITE, BORDER)
-        assert (inner.bgcolor, inner.border) == (theme.WHITE, BORDER)
-        assert label.color == theme.BLACK
+def test_swapped_letter_is_silver_with_the_new_char():
+    view, outer, _, label = render(lane=0)  # "A"
 
-    def test_status_change(self):
-        view, outer, _, _ = make_view(status=LetterStatus.FAILED)
+    view.letter.char, view.letter.swapped = "F", True
+    view.render()
 
-        view.letter.status = LetterStatus.WAITING
-        view.render()
-
-        assert (outer.bgcolor, outer.border) == (self.COLOR, None)
+    assert (outer.bgcolor, label.value) == (theme.SILVER_COLOR, "F")

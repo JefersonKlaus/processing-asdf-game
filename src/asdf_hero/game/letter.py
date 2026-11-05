@@ -7,9 +7,15 @@ from asdf_hero.game.action_bar import ActionBar
 from asdf_hero.game.states import LetterStatus
 
 
-def is_game_key(key: str) -> bool:
-    """True for the keys of the game: A, S, D, F (any case)."""
-    return key.upper() in config.CHARS
+def normalize_key(key: str) -> str:
+    """Upper case, and the same char for keys with other names (";" -> "Ç")."""
+    key = key.upper()
+    return config.KEY_ALIASES.get(key, key)
+
+
+def is_game_key(key: str, keys: tuple[str, ...] = config.LEFT_HAND_KEYS) -> bool:
+    """True for the keys of the game (any case)."""
+    return normalize_key(key) in keys
 
 
 class Letter:
@@ -23,6 +29,8 @@ class Letter:
         self.lane = lane
         self.char = char
         self.gold = gold  # surprise letter: falls faster than the others
+        self.will_swap = False  # swap challenge: swaps near the action bar
+        self.swapped = False  # swapped its char with another letter (silver)
         self.x = config.LANE_CENTERS[lane]  # center of the circle
         self.y = 0.0
         self.status = LetterStatus.WAITING
@@ -36,7 +44,7 @@ class Letter:
         return self._action_bar.touches(self.y, self.size)
 
     def matches(self, key: str) -> bool:
-        return self.char.lower() == key.lower()
+        return self.char == normalize_key(key)
 
     def move(self, dy: float) -> None:
         self.y += dy

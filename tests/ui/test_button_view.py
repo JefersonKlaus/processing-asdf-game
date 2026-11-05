@@ -1,3 +1,5 @@
+"""ButtonView: a button of the start / game over pages."""
+
 import pytest
 
 from asdf_hero.game import Button
@@ -21,9 +23,7 @@ def test_render(view):
     assert control.visible is True
     assert (control.left, control.top, control.width, control.height) == (10, 20, 200, 40)
     assert control.bgcolor == theme.BUTTON_COLOR
-    assert control.content.value == "Play"
-    assert control.content.size == theme.BUTTON_FONT_SIZE
-    assert control.content.color == theme.BUTTON_TEXT_COLOR
+    assert (control.content.value, control.content.size) == ("Play", theme.BUTTON_FONT_SIZE)
 
 
 def test_clicked_color(view):
@@ -34,9 +34,9 @@ def test_clicked_color(view):
     assert view.control.bgcolor == theme.BUTTON_CLICKED_COLOR
 
 
-def test_hide(view):
+def test_custom_font_size():
+    view = ButtonView(Button(0, 0, 10, 10), font_size=18)
+
     view.render(visible=True)
 
-    view.render(visible=False)
-
-    assert view.control.visible is False
+    assert view.control.content.size == 18

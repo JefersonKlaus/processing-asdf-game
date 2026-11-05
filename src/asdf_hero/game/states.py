@@ -9,6 +9,13 @@ class GamePage(Enum):
     GAME_OVER = 3
 
 
+class Hand(Enum):
+    """Hand used to play: it chooses the keys of the game."""
+
+    LEFT = "left"  # A S D F
+    RIGHT = "right"  # J K L Ç
+
+
 class LetterStatus(Enum):
     WAITING = 0  # above the action bar
     NEED_BE_PRESSED = 1  # in the action bar, waiting for its key

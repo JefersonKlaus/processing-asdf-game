@@ -47,6 +47,9 @@ class GameView:
             visible=False,
         )
         self.button = ButtonView(game.button)
+        self.hand_button = ButtonView(
+            game.hand_button, font_size=theme.HAND_BUTTON_FONT_SIZE
+        )
 
         self.control = ft.Stack(
             width=width,
@@ -65,6 +68,7 @@ class GameView:
                 self.points_bar,
                 self.game_over_points,
                 self.button.control,
+                self.hand_button.control,
             ],
         )
 
@@ -84,6 +88,9 @@ class GameView:
 
         self.button.render(
             visible=not running, text=theme.BUTTON_TEXTS.get(game.page, "")
+        )
+        self.hand_button.render(
+            visible=not running, text=theme.HAND_BUTTON_TEXTS[game.hand]
         )
 
     def _render_letters(self, visible: bool) -> None:

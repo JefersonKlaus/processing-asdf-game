@@ -1,12 +1,4 @@
-"""
-Shared fixtures.
-
-The tests mirror the package:
-- tests/game: game rules (no Flet)
-- tests/ui: Flet views (the controls are plain Python objects, the tests check
-  their properties without a browser)
-- tests/test_app.py, tests/test_main.py: Flet app and entry point
-"""
+"""Shared fixtures (the helpers without pytest are in tests/helpers.py)."""
 
 import random
 
@@ -48,8 +40,9 @@ def running_game(game):
 def place_letter():
     """Factory: put a letter of a lane (0-3: A, S, D, F) in a game."""
 
-    def place(game, lane, y, status=LetterStatus.WAITING, char=None):
-        letter = Letter(lane, char or config.CHARS[lane], game.action_bar)
+    def place(game, lane, y, status=LetterStatus.WAITING, char=None, gold=False):
+        char = char or config.LEFT_HAND_KEYS[lane]
+        letter = Letter(lane, char, game.action_bar, gold=gold)
         letter.y = y
         letter.status = status
         game.letters.append(letter)

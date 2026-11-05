@@ -6,8 +6,11 @@ from asdf_hero import config
 from asdf_hero.game import level
 from asdf_hero.game.action_bar import ActionBar
 from asdf_hero.game.button import Button
+from asdf_hero.game.challenges import Challenge, GoldChallenge, SwapChallenge
 from asdf_hero.game.letter import Letter, is_game_key
-from asdf_hero.game.states import GamePage, LetterStatus
+from asdf_hero.game.states import GamePage, Hand, LetterStatus
+
+HAND_KEYS = {Hand.LEFT: config.LEFT_HAND_KEYS, Hand.RIGHT: config.RIGHT_HAND_KEYS}
 
 
 class Game:
@@ -27,6 +30,7 @@ class Game:
         self.rng = rng or random.Random()
 
         self.page = GamePage.START
+        self.hand = Hand.LEFT
         self.points = 0
         self.speed = level.speed_for(0)
         self.distance = level.distance_for(0)
@@ -38,15 +42,28 @@ class Game:
             width=config.BUTTON_WIDTH,
             height=config.BUTTON_HEIGHT,
         )
+        # start and game over pages: choose the hand (left: ASDF / right: JKLÇ)
+        self.hand_button = Button(
+            x=self.button.x,
+            y=self.button.y + config.BUTTON_HEIGHT + config.BUTTON_GAP,
+            width=config.BUTTON_WIDTH,
+            height=config.BUTTON_HEIGHT,
+        )
 
-        # gold letter: normal letters left before the next gold letter
-        self.letters_until_gold: int | None = None
-        self.gold_pending = False
+        # challenges: surprises after some points
+        self.gold = GoldChallenge(self.rng)
+        self.swap = SwapChallenge(self.rng)
+        self.challenges: list[Challenge] = [self.gold, self.swap]
 
         # transition to game over (slow motion)
         self.transition_to_game_over = False
         self.slow_motion_steps = 0
         self._slow_motion_frames = 0
+
+    @property
+    def keys(self) -> tuple[str, ...]:
+        """The keys of the game (one for each lane) for the chosen hand."""
+        return HAND_KEYS[self.hand]
 
     # --- input ----------------------------------------------------------------
 
@@ -57,7 +74,7 @@ class Game:
         """
         if self.page != GamePage.RUNNING or self.transition_to_game_over:
             return
-        if not is_game_key(key):  # other keys are ignored
+        if not is_game_key(key, self.keys):  # other keys are ignored
             return
 
         # one press hits one letter: the lowest one (the next to leave the bar)
@@ -71,7 +88,7 @@ class Game:
 
         if hit is not None:
             hit.press(key)
-            self._add_point()
+            self._add_points(self._points_for(hit))
         elif not correct:
             # wrong moment: no letter with this key in the action bar
             self.transition_to_game_over = True
@@ -82,9 +99,16 @@ class Game:
         if self.button.contains(x, y):
             self.button.clicked = True
             self.start_new_game()
+        elif self.hand_button.contains(x, y):
+            self.hand_button.clicked = True
+            self.toggle_hand()
 
     def mouse_released(self) -> None:
         self.button.clicked = False
+        self.hand_button.clicked = False
+
+    def toggle_hand(self) -> None:
+        self.hand = Hand.RIGHT if self.hand == Hand.LEFT else Hand.LEFT
 
     # --- game -----------------------------------------------------------------
 
@@ -93,8 +117,8 @@ class Game:
         self.points = 0
         self._update_level()
         self.action_bar.reset()
-        self.letters_until_gold = None
-        self.gold_pending = False
+        for challenge in self.challenges:
+            challenge.reset()
         self.transition_to_game_over = False
         self.slow_motion_steps = 0
         self._slow_motion_frames = 0
@@ -122,7 +146,8 @@ class Game:
         """Move the game forward: new letters, move letters, game over."""
         self.action_bar.update()
         self._add_letter_if_needed()
-        self._add_gold_letter_if_needed()
+        for challenge in self.challenges:
+            challenge.update(self)
 
         for letter in self.letters:
             # normal letters use the same speed, so they never overlap;
@@ -139,69 +164,40 @@ class Game:
             if letter.y <= self.height + letter.size
         ]
 
-    def _last_normal_letter(self) -> Letter | None:
+    def last_normal_letter(self) -> Letter | None:
         normal = [letter for letter in self.letters if not letter.gold]
         return normal[-1] if normal else None
 
     def _add_letter_if_needed(self) -> None:
-        last = self._last_normal_letter()
+        last = self.last_normal_letter()
         if last is not None and last.y < self.distance + last.size:
             return
         random_char = self.points >= config.RANDOM_CHARS_FROM_POINTS
-        self.letters.append(self._new_letter(random_char))
-        self._count_letter_for_gold()
+        letter = self._new_letter(random_char)
+        self.letters.append(letter)
+        for challenge in self.challenges:
+            challenge.letter_added(self, letter)
 
     def _new_letter(self, random_char: bool) -> Letter:
         lane = self.rng.randrange(len(config.LANE_CENTERS))
         if random_char:
-            char = config.CHARS[self.rng.randrange(len(config.CHARS))]
+            char = self.keys[self.rng.randrange(len(self.keys))]
         else:
-            char = config.CHARS[lane]
+            char = self.keys[lane]
         return Letter(lane, char, self.action_bar)
 
-    # --- gold letter (challenge) ------------------------------------------------
+    # --- points and level -------------------------------------------------------
 
-    def _count_letter_for_gold(self) -> None:
-        """From GOLD_FROM_POINTS, a gold letter comes after 5 to 10 letters."""
-        if self.points < config.GOLD_FROM_POINTS:
-            return
-        if self.letters_until_gold is None:
-            self.letters_until_gold = self.rng.randint(
-                config.GOLD_EVERY_MIN_LETTERS, config.GOLD_EVERY_MAX_LETTERS
-            )
-        self.letters_until_gold -= 1
-        if self.letters_until_gold == 0:
-            self.letters_until_gold = None  # a new random count after this one
-            self.gold_pending = True
+    @staticmethod
+    def _points_for(letter: Letter) -> int:
+        if letter.gold:
+            return config.GOLD_POINTS
+        if letter.swapped:
+            return config.SWAP_POINTS
+        return 1
 
-    def _add_gold_letter_if_needed(self) -> None:
-        """The gold letter starts halfway between two normal letters."""
-        if not self.gold_pending:
-            return
-        last = self._last_normal_letter()
-        if last is not None and last.y < (self.distance + last.size) / 2:
-            return
-        self.gold_pending = False
-        self.letters.append(self._new_gold_letter())
-
-    def _new_gold_letter(self) -> Letter:
-        # avoid the lanes of letters that are still coming: the gold letter
-        # passes them, and they must not be on top of each other
-        busy = {
-            letter.lane
-            for letter in self.letters
-            if letter.status == LetterStatus.WAITING
-        }
-        lanes = [lane for lane in range(len(config.LANE_CENTERS)) if lane not in busy]
-        lanes = lanes or list(range(len(config.LANE_CENTERS)))
-        lane = lanes[self.rng.randrange(len(lanes))]
-        char = config.CHARS[self.rng.randrange(len(config.CHARS))]
-        return Letter(lane, char, self.action_bar, gold=True)
-
-    # --- level ----------------------------------------------------------------
-
-    def _add_point(self) -> None:
-        self.points += 1
+    def _add_points(self, points: int) -> None:
+        self.points += points
         self._update_level()
 
     def _update_level(self) -> None:
