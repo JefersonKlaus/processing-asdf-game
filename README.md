@@ -71,6 +71,7 @@ pages are ignored too.
 ```
 processing-asdf-game/
 ├── pyproject.toml               # project, dependencies, pytest / coverage / Flet settings
+├── requirements-dev.txt         # all the packages to run, test and build
 ├── README.md
 ├── docs/                        # screenshots used by this README
 ├── src/
@@ -152,19 +153,32 @@ source .venv/Scripts/activate
 
 ### 2. Install
 ```bash
-pip install -e ".[dev]"
+pip install -r requirements-dev.txt
 ```
-This installs the game (`asdf_hero` package), Flet with its web server and
-the test tools (`pytest`, `pytest-cov`). All the dependencies are in
-`pyproject.toml`:
+This installs everything to **run**, **test** and **build** the game:
+
+| Package | For |
+| --- | --- |
+| `flet` | The game (and the mobile app) |
+| `flet-web` (`flet[web]`) | The web server: `python src/main.py` |
+| `flet-cli` (`flet[cli]`) | The `flet` command: `flet build`, `flet debug` |
+| `pytest`, `pytest-cov` | The tests and the coverage |
+
+The mobile build also needs tools that are not Python packages (Flutter,
+Java, Android SDK / Xcode): see [Build a mobile app](#build-a-mobile-app-android--ios).
+
+The same packages are in `pyproject.toml`, as extras, if you prefer to install
+the project as a package:
 
 | Install | What you get |
 | --- | --- |
+| `pip install -e ".[dev,build]"` | The same as `requirements-dev.txt` |
 | `pip install -e ".[dev]"` | Play in the browser + run the tests |
 | `pip install -e ".[web]"` | Only play in the browser |
-| `pip install -e ".[build]"` | The `flet` command, to build the mobile app (see below) |
+| `pip install -e ".[build]"` | The `flet` command, to build the mobile app |
 
-Extras can be combined: `pip install -e ".[dev,build]"`.
+`tests/test_requirements.py` checks that `requirements-dev.txt` and
+`pyproject.toml` have the same packages: change both when you add a package.
 
 ### 3. Start the game
 ```bash
@@ -269,10 +283,8 @@ touch buttons and fits the screen. Flet builds the app with
 | Android (`apk`, `aab`) | Windows, macOS or Linux | Installed by `flet build` on the first build (Flutter SDK, Java JDK and Android SDK: a few GB) |
 | iOS (`ipa`, `ios-simulator`) | macOS only | Xcode (from the App Store); an Apple Developer account to install on a real iPhone |
 
-Install the `flet` command (same virtual environment as the game):
-```bash
-pip install -e ".[build]"
-```
+The `flet` command is installed by `requirements-dev.txt` (or
+`pip install -e ".[build]"`).
 
 ### 1. Set the app identity (once)
 In `pyproject.toml`, `[tool.flet]`:
@@ -325,7 +337,7 @@ web server and the test tools are extras, so the app stays small.
 ## Tests
 The tests run with [pytest](https://docs.pytest.org/) and
 [pytest-cov](https://pytest-cov.readthedocs.io/) (installed by
-`pip install -e ".[dev]"`). No browser or Flet server is needed.
+`pip install -r requirements-dev.txt`). No browser or Flet server is needed.
 
 ```bash
 pytest
@@ -346,7 +358,7 @@ src/main.py                               6      0   100%
 -------------------------------------------------------------------
 TOTAL                                   770      0   100%
 Required test coverage of 90.0% reached. Total coverage: 100.00%
-============================= 310 passed in 2.15s ==============================
+============================= 313 passed in 3.56s ==============================
 ```
 
 ### Useful commands
@@ -402,6 +414,8 @@ Each test file has one responsibility:
 | `test_lifecycle.py` | Tab connect / disconnect (pause) / close (stop) |
 | `test_screen_fit.py` | The game is made smaller to fit small pages (phones) |
 | `test_main.py` | `python src/main.py` (server settings, assets) |
+| **`tests/`** | **Project** |
+| `test_requirements.py` | `requirements-dev.txt` has the same packages as `pyproject.toml` |
 
 - **Rules without mocks:** `Game` receives the random generator (`rng`), so
   the tests choose the lanes with `scripted_rng([...])` and put letters where

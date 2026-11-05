@@ -1,0 +1,23 @@
+# Everything to run, test and build ASDF Hero (Python 3.10+):
+#
+#   pip install -r requirements-dev.txt
+#
+# The same packages are in pyproject.toml (dependencies + extras web, build
+# and dev); tests/test_requirements.py checks that both lists match.
+
+# --- run --------------------------------------------------------------------
+# flet: the game (and the mobile app)
+# web:  the web server (python src/main.py)
+# cli:  the `flet` command (flet build / flet debug)
+flet[web,cli]==1.0.5
+
+# --- test -------------------------------------------------------------------
+pytest>=7.0
+pytest-cov>=4.0
+
+# --- build a mobile app: tools that are not Python packages -------------------
+# Android (apk / aab), on Windows, macOS or Linux: Flutter SDK, Java JDK and
+#   Android SDK are installed by `flet build` on the first build.
+# iOS (ipa), on macOS only: Xcode (App Store) and an Apple Developer account
+#   to install on a real iPhone.
+# See "Build a mobile app" in README.md.
