@@ -2,6 +2,7 @@
 
 import flet as ft
 
+from asdf_hero import config
 from asdf_hero.game.game import Game
 from asdf_hero.game.states import GamePage
 from asdf_hero.ui import theme
@@ -26,7 +27,11 @@ class GameView:
 
         self.background = BackgroundView(width, height)
         self.action_bar = ActionBarView(game.action_bar, width)
-        self.letters = ft.Stack(width=width, height=height, visible=False)
+        # the letters hide behind the touch buttons: nothing of the letters is
+        # drawn below the top of the buttons
+        self.letters = ft.Stack(
+            width=width, height=config.TOUCH_BUTTONS_TOP, visible=False
+        )
         self._letter_views: dict[int, LetterView] = {}
         self.touch_buttons = TouchButtonsView(game.touch_buttons, width, height)
         self.points_bar = ft.Container(

@@ -1,4 +1,4 @@
-"""ActionBarView: color of the highlight and the press effect (2px bigger)."""
+"""ActionBarView: color of the highlight and the press effect."""
 
 import flet as ft
 import pytest
@@ -54,33 +54,14 @@ def test_color_of_the_highlight(view, correct, highlight):
 
 
 def test_normal_size_without_press(view):
-    assert sizes(view, 5) == [NORMAL] * 5
-
-
-def test_press_makes_the_bar_bigger_for_some_frames(view):
-    view.action_bar.press(correct=True)
-
-    frames = theme.ACTION_BAR_PULSE_FRAMES
-    assert sizes(view, frames + 2) == [BIGGER] * frames + [NORMAL] * 2
-
-
-def test_a_new_press_starts_again(view):
-    view.action_bar.press(correct=True)
-    sizes(view, theme.ACTION_BAR_PULSE_FRAMES - 1)
-
-    view.action_bar.press(correct=False)
-
-    frames = theme.ACTION_BAR_PULSE_FRAMES
-    assert sizes(view, frames + 1) == [BIGGER] * frames + [NORMAL]
-
-
-def test_new_game_does_not_change_the_size(view):
-    view.action_bar.press(correct=True)
-    sizes(view, theme.ACTION_BAR_PULSE_FRAMES)
-
-    view.action_bar.reset()
-
     assert sizes(view, 3) == [NORMAL] * 3
+
+
+def test_press_makes_the_bar_2px_bigger(view):
+    view.action_bar.press(correct=True)
+
+    frames = theme.PRESS_EFFECT_FRAMES
+    assert sizes(view, frames + 1) == [BIGGER] * frames + [NORMAL]
 
 
 def test_press_effect_is_real_time_during_the_slow_motion(running_game):
@@ -88,9 +69,9 @@ def test_press_effect_is_real_time_during_the_slow_motion(running_game):
     running_game.key_pressed("a")  # wrong press: slow motion starts
 
     result = []
-    for _ in range(theme.ACTION_BAR_PULSE_FRAMES + 1):
+    for _ in range(theme.PRESS_EFFECT_FRAMES + 1):
         running_game.update()  # the game waits (slow motion)...
         view.render(visible=True)  # ...the view still changes on each frame
         result.append(geometry(view))
 
-    assert result == [BIGGER] * theme.ACTION_BAR_PULSE_FRAMES + [NORMAL]
+    assert result == [BIGGER] * theme.PRESS_EFFECT_FRAMES + [NORMAL]

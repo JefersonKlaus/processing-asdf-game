@@ -7,6 +7,7 @@ import flet as ft
 
 from asdf_hero.game.action_bar import ActionBar
 from asdf_hero.ui import theme
+from asdf_hero.ui.press_effect import PressEffect
 
 
 class ActionBarView:
@@ -22,24 +23,14 @@ class ActionBarView:
             border=ft.Border.all(1, theme.BLACK),
             visible=False,
         )
-        self._seen_presses = action_bar.presses
-        self._pulse_frames_left = 0
+        self._press_effect = PressEffect(action_bar.presses)
 
     def render(self, visible: bool) -> None:
         bar, control = self.action_bar, self.control
         control.visible = visible
         control.bgcolor = theme.ACTION_BAR_COLORS[bar.highlight]
 
-        # a new press makes the bar bigger for some frames (real time frames,
-        # also during the slow motion of the game over)
-        if bar.presses != self._seen_presses:
-            self._seen_presses = bar.presses
-            self._pulse_frames_left = theme.ACTION_BAR_PULSE_FRAMES
-        grow = 0
-        if self._pulse_frames_left > 0:
-            grow = theme.ACTION_BAR_PULSE
-            self._pulse_frames_left -= 1
-
+        grow = self._press_effect.grow(bar.presses)
         control.left = -grow
         control.top = bar.top - grow
         control.width = self._width + 2 * grow

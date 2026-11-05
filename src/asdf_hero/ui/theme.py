@@ -38,16 +38,17 @@ ACTION_BAR_COLORS = {
     Highlight.PRESSED: rgb(255, 249, 196, 220),  # light yellow
     Highlight.WRONG: rgb(255, 205, 210, 220),  # light red
 }
-# on each key press the bar gets bigger (pixels on each side) for some
-# frames and then gets back to its size (8 frames = 0.13s at 60 FPS)
-ACTION_BAR_PULSE = 2
-ACTION_BAR_PULSE_FRAMES = 8
+# press effect (action bar and touch buttons): on each key press the control
+# gets bigger (pixels on each side) for some frames and then gets back to its
+# size (8 frames = 0.13s at 60 FPS)
+PRESS_EFFECT_GROW = 2
+PRESS_EFFECT_FRAMES = 8
 
 # --- touch buttons: the color of the lane, the key of the lane -------------
 TOUCH_BUTTON_FONT_SIZE = 30
 TOUCH_BUTTON_TEXT_COLOR = rgb(255, 255, 255)
 TOUCH_BUTTON_RADIUS = 10
-TOUCH_BUTTON_PRESSED_OPACITY = 0.6  # while it is pressed
+TOUCH_BUTTON_PRESSED_OPACITY = 0.6  # during the press effect
 
 # --- button -----------------------------------------------------------------
 BUTTON_COLOR = rgb(0, 0, 0)

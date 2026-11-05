@@ -7,7 +7,11 @@ class Button:
         self.y = y
         self.width = width
         self.height = height
-        self.clicked = False
+        self.clicked = False  # held down (start / hand buttons)
+        self.presses = 0  # number of presses (the view shows a press effect)
+
+    def press(self) -> None:
+        self.presses += 1
 
     def contains(self, x: float, y: float) -> bool:
         return (

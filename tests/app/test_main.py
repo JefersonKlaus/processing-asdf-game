@@ -5,7 +5,6 @@ import runpy
 from unittest import mock
 
 import flet as ft
-import pytest
 
 from asdf_hero.ui import theme
 

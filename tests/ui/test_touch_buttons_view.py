@@ -38,14 +38,23 @@ def test_shows_the_keys(view, keys):
     assert tuple(control.content.value for control in view.controls) == keys
 
 
-def test_pressed_button_is_lighter(view, game):
-    game.touch_buttons[1].clicked = True
+def test_pressed_button_gets_bigger_and_lighter(view, game):
+    button = game.touch_buttons[1]
+    button.press()
 
     view.render(visible=True, keys=("A", "S", "D", "F"))
 
-    assert [control.opacity for control in view.controls] == [
-        1.0,
-        theme.TOUCH_BUTTON_PRESSED_OPACITY,
-        1.0,
-        1.0,
-    ]
+    control, grow = view.controls[1], theme.PRESS_EFFECT_GROW
+    assert (control.left, control.top) == (button.x - grow, button.y - grow)
+    assert (control.width, control.height) == (button.width + 2 * grow, button.height + 2 * grow)
+    assert [c.opacity for c in view.controls] == [1.0, theme.TOUCH_BUTTON_PRESSED_OPACITY, 1.0, 1.0]
+
+
+def test_back_to_normal_after_the_effect(view, game):
+    game.touch_buttons[1].press()
+
+    for _ in range(theme.PRESS_EFFECT_FRAMES + 1):
+        view.render(visible=True, keys=("A", "S", "D", "F"))
+
+    assert view.controls[1].width == game.touch_buttons[1].width
+    assert view.controls[1].opacity == 1.0

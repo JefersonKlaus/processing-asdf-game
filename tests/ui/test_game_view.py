@@ -99,6 +99,16 @@ def test_best_results_below_the_points_and_above_the_buttons(view):
     assert banner_bottom <= view.game.button.y  # above the retry button
 
 
+def test_keyboard_key_shows_the_press_effect_on_its_button(view, running_game):
+    view.render()
+
+    running_game.key_pressed("d")
+    view.render()
+
+    pressed = view.touch_buttons.controls[2]
+    assert pressed.width == running_game.touch_buttons[2].width + 2 * theme.PRESS_EFFECT_GROW
+
+
 def test_hand_button_below_the_start_button(view):
     view.render()
 

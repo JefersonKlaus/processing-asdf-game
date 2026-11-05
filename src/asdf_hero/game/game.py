@@ -9,7 +9,7 @@ from asdf_hero.game import level
 from asdf_hero.game.action_bar import ActionBar
 from asdf_hero.game.button import Button
 from asdf_hero.game.challenges import Challenge, GoldChallenge, SwapChallenge
-from asdf_hero.game.letter import Letter, is_game_key
+from asdf_hero.game.letter import Letter, is_game_key, normalize_key
 from asdf_hero.game.scoreboard import Result, Scoreboard
 from asdf_hero.game.states import GamePage, Hand, LetterStatus
 
@@ -96,6 +96,9 @@ class Game:
         if not is_game_key(key, self.keys):  # other keys are ignored
             return
 
+        # the touch button of the key looks pressed (keyboard or touch)
+        self.touch_buttons[self.keys.index(normalize_key(key))].press()
+
         # one press hits one letter: the lowest one (the next to leave the bar)
         targets = [letter for letter in self.letters if letter.can_be_pressed(key)]
         hit = max(targets, key=lambda letter: letter.y) if targets else None
@@ -125,14 +128,13 @@ class Game:
             self.toggle_hand()
 
     def mouse_released(self) -> None:
-        for button in (self.button, self.hand_button, *self.touch_buttons):
-            button.clicked = False
+        self.button.clicked = False
+        self.hand_button.clicked = False
 
     def _touch(self, x: float, y: float) -> None:
         """A touch button works like the key of its lane."""
         for key, button in zip(self.keys, self.touch_buttons):
             if button.contains(x, y):
-                button.clicked = True
                 self.key_pressed(key)
                 return
 

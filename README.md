@@ -19,8 +19,10 @@ The examples below use the left hand keys.
 
 **Phone / tablet:** below the action bar there are 4 touch buttons, one for
 each lane, with the color of the lane and its key. A touch on a button works
-like its key. On small screens the game is made smaller to fit the page (it is
-never made bigger than its size).
+like its key, and a key pressed on the keyboard shows the press effect on its
+button (like the action bar). The letters hide behind the buttons. On small
+screens the game is made smaller to fit the page (it is never made bigger than
+its size).
 
 Letters (`A`, `S`, `D`, `F`) fall down four lanes. Press the matching key while
 the letter touches the white action bar to score a point (from the moment the
@@ -97,7 +99,8 @@ processing-asdf-game/
 │           ├── background_view.py
 │           ├── button_view.py
 │           ├── scoreboard_view.py   #   the 5 best results
-│           └── touch_buttons_view.py   #   the 4 touch buttons (phone)
+│           ├── touch_buttons_view.py   #   the 4 touch buttons (phone)
+│           └── press_effect.py  #   press effect (action bar and touch buttons)
 └── tests/                       # one responsibility per file (see "Tests")
     ├── conftest.py              # shared fixtures
     ├── helpers.py               # shared helpers (perfect player, frames...)
@@ -151,8 +154,17 @@ source .venv/Scripts/activate
 ```bash
 pip install -e ".[dev]"
 ```
-This installs the game (`asdf_hero` package), Flet and the test tools
-(`pytest`, `pytest-cov`). All the dependencies are in `pyproject.toml`.
+This installs the game (`asdf_hero` package), Flet with its web server and
+the test tools (`pytest`, `pytest-cov`). All the dependencies are in
+`pyproject.toml`:
+
+| Install | What you get |
+| --- | --- |
+| `pip install -e ".[dev]"` | Play in the browser + run the tests |
+| `pip install -e ".[web]"` | Only play in the browser |
+| `pip install -e ".[build]"` | The `flet` command, to build the mobile app (see below) |
+
+Extras can be combined: `pip install -e ".[dev,build]"`.
 
 ### 3. Start the game
 ```bash
@@ -208,14 +220,16 @@ points) to the max level (max speed at 75 points, min distance at 100 points):
 | Keys | `LEFT_HAND_KEYS` / `RIGHT_HAND_KEYS` | `ASDF` / `JKLÇ` | Keys of each hand (one for each lane) |
 | Key names | `KEY_ALIASES` | `{";": "Ç"}` | Other names of the same key |
 
-In `ui/theme.py`: the press effect of the action bar is `ACTION_BAR_PULSE`
-(2 px bigger on each side) for `ACTION_BAR_PULSE_FRAMES` frames (8 = 0.13 s),
+In `ui/theme.py`: the press effect of the action bar and of the touch buttons
+is `PRESS_EFFECT_GROW` (2 px bigger on each side) for `PRESS_EFFECT_FRAMES`
+frames (8 = 0.13 s),
 the colors of the challenges are `GOLD_COLOR` / `GOLD_GLOW_COLOR` and
 `SILVER_COLOR` / `SILVER_GLOW_COLOR`, the texts of the hand button are
 `HAND_BUTTON_TEXTS`, and the best results use `SCOREBOARD_DATE_FORMAT`
 (`dd/mm/yyyy`) and `SCOREBOARD_TIME_FORMAT` (`HH:MM`). The touch buttons use
 `TOUCH_BUTTON_FONT_SIZE`, `TOUCH_BUTTON_RADIUS` and
-`TOUCH_BUTTON_PRESSED_OPACITY` (the button is lighter while it is pressed).
+`TOUCH_BUTTON_PRESSED_OPACITY` (the button is lighter during the press
+effect).
 
 To add a new challenge: create a `Challenge` subclass in
 `game/challenges/` (with a `ChallengeSchedule`), and add it to
@@ -243,6 +257,71 @@ changes.
 
 ---
 
+## Build a mobile app (Android / iOS)
+The same code can be built as an app that is installed on the phone. Inside
+the app Python runs on the phone: no server, no network. The game uses the
+touch buttons and fits the screen. Flet builds the app with
+[`flet build`](https://flet.dev/docs/publish) (Flutter).
+
+### What is needed
+| To build | Computer | Tools |
+| --- | --- | --- |
+| Android (`apk`, `aab`) | Windows, macOS or Linux | Installed by `flet build` on the first build (Flutter SDK, Java JDK and Android SDK: a few GB) |
+| iOS (`ipa`, `ios-simulator`) | macOS only | Xcode (from the App Store); an Apple Developer account to install on a real iPhone |
+
+Install the `flet` command (same virtual environment as the game):
+```bash
+pip install -e ".[build]"
+```
+
+### 1. Set the app identity (once)
+In `pyproject.toml`, `[tool.flet]`:
+- `org`: your organization as a reverse domain (`com.example` is only an
+  example). The Android package / iOS bundle id is `<org>.<project name>`
+  (for example `com.example.asdf_hero`) and must be unique in the stores.
+- `product`: the name of the app on the phone (`ASDF Hero`).
+- `[project] version`: the version of the app (`1.0.0`).
+
+Optional: put an app icon in `src/assets/icon.png` (square PNG, 1024 x 1024).
+Without it, the Flet icon is used.
+
+### 2. Build
+From the project folder (`flet build` reads `pyproject.toml`: the app is in
+`src/`, the entry point is `src/main.py`):
+
+```bash
+flet build apk      # Android: .apk file to install on a phone
+flet build aab      # Android: .aab file for the Google Play Store
+flet build ipa      # iOS (macOS only): .ipa file
+```
+The first build asks to install the Flutter SDK (answer `y`, or use
+`flet build apk --yes`) and takes a while; the next builds are faster. The
+result is in `build/apk/` (or `build/aab/`, `build/ipa/`).
+
+Only the packages of `[project] dependencies` (Flet) go into the app: the
+web server and the test tools are extras, so the app stays small.
+
+### 3. Install the APK on an Android phone
+- With a USB cable (USB debugging on): `adb install build/apk/app-release.apk`
+  (`adb` is in the Android SDK, in `platform-tools`), or
+- copy the `.apk` file to the phone and open it (allow "install unknown apps").
+
+### Test on a phone while developing
+- In the phone browser (no build): see [Play on a phone](#play-on-a-phone).
+- As an app, on a phone connected with USB: `flet debug android`
+  (or `flet debug ios` on macOS).
+
+### Good to know
+- To publish in the stores the app must be signed: see the `--android-signing-*`
+  and `--ios-*` options of `flet build` and the
+  [Flet publish guide](https://flet.dev/docs/publish).
+- The best results are kept in memory while the app is open (like on the web
+  server, they are lost when the app is closed).
+- Use the same Flet version in `pyproject.toml` and in the `flet` command
+  (1.0.5).
+
+---
+
 ## Tests
 The tests run with [pytest](https://docs.pytest.org/) and
 [pytest-cov](https://pytest-cov.readthedocs.io/) (installed by
@@ -265,9 +344,9 @@ src/asdf_hero/config.py                  22      0   100%
 src/asdf_hero/ui/theme.py                23      0   100%
 src/main.py                               6      0   100%
 -------------------------------------------------------------------
-TOTAL                                   752      0   100%
+TOTAL                                   770      0   100%
 Required test coverage of 90.0% reached. Total coverage: 100.00%
-============================= 301 passed in 3.44s ==============================
+============================= 310 passed in 2.15s ==============================
 ```
 
 ### Useful commands
@@ -303,18 +382,19 @@ Each test file has one responsibility:
 | `test_gold_schedule.py` | When and where the gold letter appears |
 | `test_gold_letter.py` | Gold letter: speed, points, game over |
 | `test_swap.py` | Swap challenge: when, which letters, new chars, silver |
-| `test_touch_buttons.py` | Touch buttons: one in each lane, each one is the key of its lane |
+| `test_touch_buttons.py` | Touch buttons: one in each lane, each one is the key of its lane, keys press their button |
 | `test_full_game.py` | Whole games with a perfect player |
 | **`tests/ui/`** | **Flet views** |
 | `test_theme.py` | Color helper and the rules of colors / texts |
 | `test_letter_view.py` | Circles, char, colors of each status, gold / silver glow |
-| `test_action_bar_view.py` | Bar color and the press effect (2 px bigger) |
+| `test_action_bar_view.py` | Bar color and its press effect (also during the slow motion) |
 | `test_button_view.py` | A button |
 | `test_background_view.py` | Lanes and the game over banner |
 | `test_game_view.py` | Layers and what each page shows (texts, buttons, best results position) |
 | `test_scoreboard_view.py` | Best results: position, date, time, points, last game in bold |
-| `test_touch_buttons_view.py` | Touch buttons: lane colors, keys, pressed button |
-| `test_game_view_letters.py` | One view for each letter (kept, removed, gold on top) |
+| `test_touch_buttons_view.py` | Touch buttons: lane colors, keys, press effect |
+| `test_press_effect.py` | Press effect: 2 px bigger for some frames after each press |
+| `test_game_view_letters.py` | One view for each letter (kept, removed, gold on top, hidden behind the buttons) |
 | **`tests/app/`** | **Flet app** |
 | `test_page_setup.py` | Page settings, events, `main()`, best results shared by all tabs |
 | `test_input.py` | Keys / clicks are queued and applied by the game loop |

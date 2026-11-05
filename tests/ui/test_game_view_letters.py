@@ -1,7 +1,9 @@
 """GameView: one LetterView for each letter of the game."""
 
+import flet as ft
 import pytest
 
+from asdf_hero import config
 from asdf_hero.ui import GameView
 
 
@@ -64,6 +66,12 @@ def test_list_is_not_replaced_when_nothing_changes(view, running_game, place_let
     view.render()
 
     assert view.letters.controls is controls
+
+
+def test_letters_hide_behind_the_touch_buttons(view):
+    # the letters layer ends at the top of the buttons: it cuts the letters
+    assert view.letters.height == config.TOUCH_BUTTONS_TOP
+    assert view.letters.clip_behavior == ft.ClipBehavior.HARD_EDGE
 
 
 def test_letters_show_the_keys_of_the_hand(running_game):

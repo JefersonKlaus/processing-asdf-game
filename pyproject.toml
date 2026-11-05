@@ -8,17 +8,24 @@ version = "1.0.0"
 description = "ASDF Hero: press A, S, D, F when the letters reach the action bar."
 readme = "README.md"
 requires-python = ">=3.10"
-dependencies = ["flet[web]==1.0.5"]
+# the game (also the mobile app, built by `flet build`: keep it small)
+dependencies = ["flet==1.0.5"]
 
 [project.optional-dependencies]
-dev = ["pytest>=7.0", "pytest-cov>=4.0"]
+web = ["flet[web]==1.0.5"]  # web server: python src/main.py
+build = ["flet[cli]==1.0.5"]  # `flet build` (mobile / desktop / web apps)
+dev = ["flet[web]==1.0.5", "pytest>=7.0", "pytest-cov>=4.0"]
 
 [tool.setuptools.packages.find]
 where = ["src"]
 
 # --- Flet (flet run / flet build) ------------------------------------------
 [tool.flet]
-product = "ASDF Hero"
+product = "ASDF Hero"  # name of the app on the phone
+# organization (reverse domain): change it to yours. The Android package and
+# the iOS bundle id are "<org>.<project name>", for example com.example.asdf_hero
+org = "com.example"
+description = "Press A, S, D, F when the letters reach the action bar."
 
 [tool.flet.app]
 path = "src"

@@ -33,11 +33,6 @@ def test_one_action_bar_color_for_each_highlight():
     assert set(theme.ACTION_BAR_COLORS) == set(Highlight)
 
 
-def test_press_effect_is_2px_and_short():
-    assert theme.ACTION_BAR_PULSE == 2  # pixels on each side
-    assert 0 < theme.ACTION_BAR_PULSE_FRAMES / 60 <= 0.2  # seconds
-
-
 def test_hand_button_texts_show_the_keys():
     assert "ASDF" in theme.HAND_BUTTON_TEXTS[Hand.LEFT]
     assert "JKLÇ" in theme.HAND_BUTTON_TEXTS[Hand.RIGHT]

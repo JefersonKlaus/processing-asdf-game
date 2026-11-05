@@ -3,7 +3,7 @@
 import pytest
 
 from asdf_hero import config
-from asdf_hero.game import Game, LetterStatus
+from asdf_hero.game import LetterStatus
 from tests.helpers import set_points
 
 NEED = LetterStatus.NEED_BE_PRESSED
