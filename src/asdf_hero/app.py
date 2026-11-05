@@ -8,19 +8,26 @@ import flet as ft
 
 from asdf_hero import config
 from asdf_hero.game.game import Game
+from asdf_hero.game.scoreboard import Scoreboard
 from asdf_hero.ui import theme
 from asdf_hero.ui.game_view import GameView
 
 logger = logging.getLogger(__name__)
 
+# best results of all the games (all browser tabs), in memory while the
+# server runs
+SCOREBOARD = Scoreboard()
+
 
 class GameApp:
     """One Flet page (browser tab) playing one game."""
 
-    def __init__(self, page: ft.Page, fps: int = config.FPS) -> None:
+    def __init__(
+        self, page: ft.Page, fps: int = config.FPS, scoreboard: Scoreboard = SCOREBOARD
+    ) -> None:
         self.page = page
         self.fps = fps
-        self.game = Game()
+        self.game = Game(scoreboard=scoreboard)
         self.view = GameView(self.game)
         # keyboard / mouse events waiting for the game loop
         self.events: collections.deque[tuple] = collections.deque()
@@ -36,18 +43,45 @@ class GameApp:
         page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
         page.vertical_alignment = ft.MainAxisAlignment.CENTER
 
-        page.add(
-            ft.GestureDetector(
-                content=self.view.control,
-                mouse_cursor=ft.MouseCursor.CLICK,
-                on_tap_down=self.on_tap_down,
-                on_tap_up=self.on_tap_up,
-            )
+        self.detector = ft.GestureDetector(
+            left=0,
+            top=0,
+            content=self.view.control,
+            mouse_cursor=ft.MouseCursor.CLICK,
+            on_tap_down=self.on_tap_down,
+            on_tap_up=self.on_tap_up,
         )
+        # the screen: the game scaled to fit the page (phones)
+        self.screen = ft.Stack(
+            clip_behavior=ft.ClipBehavior.NONE, controls=[self.detector]
+        )
+        self.fit_to_page(page.width, page.height)
+        page.add(self.screen)
+
+        page.on_resize = self.on_resize
         page.on_keyboard_event = self.on_keyboard
         page.on_connect = self.on_connect
         page.on_disconnect = self.on_disconnect
         page.on_close = self.on_close
+
+    # --- screen size -------------------------------------------------------------
+
+    def fit_to_page(self, page_width: float | None, page_height: float | None) -> None:
+        """
+        Make the game smaller when the page is smaller than the game (phones).
+        The game is never bigger than its size. Taps keep the game pixels.
+        """
+        scale = 1.0
+        if page_width and page_height:
+            scale = min(1.0, page_width / self.game.width, page_height / self.game.height)
+        self.scale = scale
+        # the game keeps its size inside, and it is drawn smaller from the top left
+        self.detector.scale = ft.Scale(scale, alignment=ft.Alignment.TOP_LEFT)
+        self.screen.width = self.game.width * scale
+        self.screen.height = self.game.height * scale
+
+    def on_resize(self, e: ft.PageResizeEvent) -> None:
+        self.fit_to_page(e.width, e.height)
 
     # --- input: only queued here, applied by the game loop ----------------------
 

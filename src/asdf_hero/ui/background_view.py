@@ -31,11 +31,15 @@ class BackgroundView:
             visible=False,
             controls=[
                 ft.Container(
-                    left=0, top=200, width=width, height=120, bgcolor=theme.BANNER_COLOR
+                    left=0,
+                    top=theme.GAME_OVER_BANNER_TOP,
+                    width=width,
+                    height=theme.GAME_OVER_BANNER_HEIGHT,
+                    bgcolor=theme.BANNER_COLOR,
                 ),
                 ft.Container(
                     left=0,
-                    top=205,
+                    top=theme.GAME_OVER_TEXT_TOP,
                     width=width,
                     height=65,
                     alignment=ft.Alignment.CENTER,

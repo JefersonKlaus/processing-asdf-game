@@ -7,6 +7,7 @@ from asdf_hero.game.action_bar import ActionBar
 from asdf_hero.game.button import Button
 from asdf_hero.game.game import Game
 from asdf_hero.game.letter import Letter, is_game_key, normalize_key
+from asdf_hero.game.scoreboard import Result, Scoreboard
 from asdf_hero.game.states import GamePage, Hand, Highlight, LetterStatus
 
 __all__ = [
@@ -18,6 +19,8 @@ __all__ = [
     "Highlight",
     "Letter",
     "LetterStatus",
+    "Result",
+    "Scoreboard",
     "is_game_key",
     "normalize_key",
 ]

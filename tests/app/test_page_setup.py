@@ -22,7 +22,8 @@ def test_page_settings(game_app, page):
 def test_game_view_inside_a_gesture_detector(game_app, page):
     game_app.build()
 
-    [detector] = page.controls
+    [screen] = page.controls
+    [detector] = screen.controls
     assert isinstance(detector, ft.GestureDetector)
     assert detector.content is game_app.view.control
     assert detector.on_tap_down == game_app.on_tap_down
@@ -33,6 +34,7 @@ def test_page_events(game_app, page):
     game_app.build()
 
     assert page.on_keyboard_event == game_app.on_keyboard
+    assert page.on_resize == game_app.on_resize
     assert page.on_connect == game_app.on_connect
     assert page.on_disconnect == game_app.on_disconnect
     assert page.on_close == game_app.on_close
@@ -46,9 +48,15 @@ def test_each_page_has_its_own_game():
     assert first.view.game is first.game
 
 
+def test_all_pages_share_the_best_results():
+    first, second = GameApp(FakePage()), GameApp(FakePage())
+
+    assert first.game.scoreboard is second.game.scoreboard is app_module.SCOREBOARD
+
+
 def test_main_builds_and_runs_the_app(page):
     with mock.patch.object(GameApp, "run", new=mock.AsyncMock()) as run:
         asyncio.run(app_module.main(page))
 
     run.assert_awaited_once()
-    assert isinstance(page.controls[0], ft.GestureDetector)
+    assert isinstance(page.controls[0].controls[0], ft.GestureDetector)

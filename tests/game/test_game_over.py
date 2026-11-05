@@ -1,7 +1,10 @@
-"""Game over: a missed letter or a wrong press, then the slow motion."""
+"""Game over: a missed letter or a wrong press, the slow motion, the result."""
+
+import random
+from datetime import datetime
 
 from asdf_hero import config
-from asdf_hero.game import GamePage, LetterStatus
+from asdf_hero.game import Game, GamePage, LetterStatus, Scoreboard
 from tests.helpers import GAME_OVER_FRAMES, frames
 
 
@@ -34,6 +37,25 @@ def test_game_over_page_after_the_slow_motion(running_game):
 
     running_game.update()
     assert running_game.page == GamePage.GAME_OVER
+
+
+def test_the_result_goes_to_the_scoreboard():
+    when = datetime(2025, 3, 5, 14, 30)
+    board = Scoreboard()
+    game = Game(rng=random.Random(0), scoreboard=board, clock=lambda: when)
+    game.start_new_game()
+    game.points = 42
+
+    game.key_pressed("a")  # wrong moment
+    frames(game, GAME_OVER_FRAMES - 1)
+    assert board.best == []  # only when the game over page shows
+
+    game.update()
+    assert [(r.points, r.when) for r in board.best] == [(42, when)]
+    assert game.last_result is board.best[0]
+
+    frames(game, 100)  # only once
+    assert len(board.best) == 1
 
 
 def test_points_are_kept(running_game):

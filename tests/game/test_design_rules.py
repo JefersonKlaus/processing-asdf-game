@@ -50,7 +50,25 @@ def test_swap_challenge():
 
 def test_swap_gives_time_to_react_at_the_max_speed():
     # from the swap until the circle touches the bar
-    assert seconds(config.SWAP_DISTANCE / config.MAX_SPEED) >= 0.3
+    assert config.SWAP_DISTANCE == 150
+    assert seconds(config.SWAP_DISTANCE / config.MAX_SPEED) >= 0.5
+
+
+def test_touch_buttons_are_big_enough_for_a_phone():
+    # the common minimum for a touch target is 48 x 48 pixels, also when the
+    # game is made smaller to fit a phone (a page of 360 x 700)
+    lane_width = config.LANE_LINES[1] - config.LANE_LINES[0]
+    width = lane_width - config.LANE_LINE_WIDTH - 2 * config.TOUCH_BUTTON_MARGIN
+    scale = min(360 / config.WIDTH, 700 / config.HEIGHT)
+    assert width * scale >= 48
+    assert config.TOUCH_BUTTON_HEIGHT * scale >= 48
+
+
+def test_touch_buttons_between_the_action_bar_and_the_points_bar():
+    bar_bottom = config.ACTION_BAR_TOP + config.ACTION_BAR_HEIGHT + 2  # press effect
+    points_bar_top = config.HEIGHT - 35
+    assert bar_bottom <= config.TOUCH_BUTTONS_TOP
+    assert config.TOUCH_BUTTONS_TOP + config.TOUCH_BUTTON_HEIGHT <= points_bar_top
 
 
 def test_gold_letter_can_be_pressed_at_the_max_speed():

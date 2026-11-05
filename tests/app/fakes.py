@@ -10,7 +10,9 @@ REAL_SLEEP = asyncio.sleep
 class FakePage:
     """The parts of ft.Page used by the app."""
 
-    def __init__(self):
+    def __init__(self, width=None, height=None):
+        self.width = width  # size of the browser page (None: unknown)
+        self.height = height
         self.controls = []
         self.updates = 0
         self.visible_waits = 0

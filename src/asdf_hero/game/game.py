@@ -1,6 +1,8 @@
 """The game rules: pages, letters, points, level and game over."""
 
 import random
+from collections.abc import Callable
+from datetime import datetime
 
 from asdf_hero import config
 from asdf_hero.game import level
@@ -8,6 +10,7 @@ from asdf_hero.game.action_bar import ActionBar
 from asdf_hero.game.button import Button
 from asdf_hero.game.challenges import Challenge, GoldChallenge, SwapChallenge
 from asdf_hero.game.letter import Letter, is_game_key
+from asdf_hero.game.scoreboard import Result, Scoreboard
 from asdf_hero.game.states import GamePage, Hand, LetterStatus
 
 HAND_KEYS = {Hand.LEFT: config.LEFT_HAND_KEYS, Hand.RIGHT: config.RIGHT_HAND_KEYS}
@@ -24,10 +27,16 @@ class Game:
         width: float = config.WIDTH,
         height: float = config.HEIGHT,
         rng: random.Random | None = None,
+        scoreboard: Scoreboard | None = None,
+        clock: Callable[[], datetime] = datetime.now,
     ) -> None:
         self.width = width
         self.height = height
         self.rng = rng or random.Random()
+        # best results: the app shares one scoreboard between all the games
+        self.scoreboard = scoreboard or Scoreboard()
+        self.clock = clock
+        self.last_result: Result | None = None  # result of the last game
 
         self.page = GamePage.START
         self.hand = Hand.LEFT
@@ -49,6 +58,16 @@ class Game:
             width=config.BUTTON_WIDTH,
             height=config.BUTTON_HEIGHT,
         )
+        # running page: one touch button for each lane (each one is a key)
+        self.touch_buttons = [
+            Button(
+                x=line + config.LANE_LINE_WIDTH + config.TOUCH_BUTTON_MARGIN,
+                y=config.TOUCH_BUTTONS_TOP,
+                width=next_line - line - config.LANE_LINE_WIDTH - 2 * config.TOUCH_BUTTON_MARGIN,
+                height=config.TOUCH_BUTTON_HEIGHT,
+            )
+            for line, next_line in zip(config.LANE_LINES, config.LANE_LINES[1:])
+        ]
 
         # challenges: surprises after some points
         self.gold = GoldChallenge(self.rng)
@@ -94,7 +113,9 @@ class Game:
             self.transition_to_game_over = True
 
     def mouse_pressed(self, x: float, y: float) -> None:
+        """A click or a touch (x, y in game pixels)."""
         if self.page == GamePage.RUNNING:
+            self._touch(x, y)
             return
         if self.button.contains(x, y):
             self.button.clicked = True
@@ -104,8 +125,16 @@ class Game:
             self.toggle_hand()
 
     def mouse_released(self) -> None:
-        self.button.clicked = False
-        self.hand_button.clicked = False
+        for button in (self.button, self.hand_button, *self.touch_buttons):
+            button.clicked = False
+
+    def _touch(self, x: float, y: float) -> None:
+        """A touch button works like the key of its lane."""
+        for key, button in zip(self.keys, self.touch_buttons):
+            if button.contains(x, y):
+                button.clicked = True
+                self.key_pressed(key)
+                return
 
     def toggle_hand(self) -> None:
         self.hand = Hand.RIGHT if self.hand == Hand.LEFT else Hand.LEFT
@@ -136,11 +165,15 @@ class Game:
                 return
             self._slow_motion_frames = 0
             if self.slow_motion_steps >= config.SLOW_MOTION_STEPS:
-                self.page = GamePage.GAME_OVER
+                self._game_over()
                 return
             self.slow_motion_steps += 1
 
         self._step()
+
+    def _game_over(self) -> None:
+        self.page = GamePage.GAME_OVER
+        self.last_result = self.scoreboard.add(self.points, self.clock())
 
     def _step(self) -> None:
         """Move the game forward: new letters, move letters, game over."""

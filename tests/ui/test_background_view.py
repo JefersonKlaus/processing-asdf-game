@@ -28,7 +28,8 @@ def test_game_over_banner():
     view = BackgroundView(400, 800)
     bar, text = view.game_over_banner.controls
 
-    assert (bar.left, bar.top, bar.width, bar.height) == (0, 200, 400, 120)
+    assert (bar.left, bar.top, bar.width) == (0, theme.GAME_OVER_BANNER_TOP, 400)
+    assert bar.height == theme.GAME_OVER_BANNER_HEIGHT
     assert text.content.value == "GAME OVER"
     assert text.content.size == theme.GAME_OVER_FONT_SIZE
 

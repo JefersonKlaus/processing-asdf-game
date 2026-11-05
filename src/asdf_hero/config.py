@@ -30,7 +30,7 @@ HIGHLIGHT_FRAMES = 12  # how long the bar is highlighted after a key press
 
 # --- game level: it starts easy and gets harder with the points -------------
 INIT_SPEED = 3.0  # pixels per frame (180 px/s)
-MAX_SPEED = 4.0  # pixels per frame (5=270 px/s)
+MAX_SPEED = 4.5  # pixels per frame (270 px/s)
 SPEED_STEP_BY_POINT = 0.02  # max speed at 75 points
 INIT_DISTANCE = 150  # free space between two letters
 MIN_DISTANCE = 100
@@ -54,12 +54,20 @@ GOLD_POINTS = 1  # points for a gold letter (a normal letter is 1 point)
 SWAP_FROM_POINTS = 50
 SWAP_EVERY_MIN_LETTERS = 5
 SWAP_EVERY_MAX_LETTERS = 10
-SWAP_DISTANCE = 100  # pixels between the letter circle and the action bar
+SWAP_DISTANCE = 150  # pixels between the letter circle and the action bar
 SWAP_POINTS = 1  # points for a silver (swapped) letter
 
 # --- transition to game over (slow motion) -----------------------------------
 SLOW_MOTION_STEPS = 13  # game steps shown before the game over page
 SLOW_MOTION_STEP_FRAMES = 12  # one step every 12 frames (0.2s at 60 FPS)
+
+# --- touch buttons (phone / tablet): one for each lane, below the action bar --
+TOUCH_BUTTONS_TOP = 690  # the action bar ends at 680 (682 with the press effect)
+TOUCH_BUTTON_HEIGHT = 68  # ends at 758: the points bar starts at 765
+TOUCH_BUTTON_MARGIN = 2  # space between the button and the lane lines
+
+# --- best results (game over page) -----------------------------------------
+SCOREBOARD_SIZE = 5
 
 # --- buttons: start / retry and hand (left / right) --------------------------
 BUTTON_WIDTH = 200

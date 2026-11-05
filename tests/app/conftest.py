@@ -4,6 +4,7 @@ import flet as ft
 import pytest
 
 from asdf_hero.app import GameApp
+from asdf_hero.game import Scoreboard
 from tests.app.fakes import FakePage
 
 
@@ -21,4 +22,4 @@ def page():
 
 @pytest.fixture
 def game_app(page):
-    return GameApp(page)
+    return GameApp(page, scoreboard=Scoreboard())

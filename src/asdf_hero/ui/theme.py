@@ -43,6 +43,12 @@ ACTION_BAR_COLORS = {
 ACTION_BAR_PULSE = 2
 ACTION_BAR_PULSE_FRAMES = 8
 
+# --- touch buttons: the color of the lane, the key of the lane -------------
+TOUCH_BUTTON_FONT_SIZE = 30
+TOUCH_BUTTON_TEXT_COLOR = rgb(255, 255, 255)
+TOUCH_BUTTON_RADIUS = 10
+TOUCH_BUTTON_PRESSED_OPACITY = 0.6  # while it is pressed
+
 # --- button -----------------------------------------------------------------
 BUTTON_COLOR = rgb(0, 0, 0)
 BUTTON_CLICKED_COLOR = rgb(50, 50, 50)
@@ -66,3 +72,19 @@ POINTS_BAR_HEIGHT = 35
 BANNER_COLOR = rgb(255, 255, 255, 200)
 GAME_OVER_TEXT = "GAME OVER"
 GAME_OVER_FONT_SIZE = 50
+
+# game over page layout (y of each part): banner with "GAME OVER", the points
+# and the best results, above the retry button (y=360)
+GAME_OVER_BANNER_TOP = 100
+GAME_OVER_BANNER_HEIGHT = 252
+GAME_OVER_TEXT_TOP = 105
+GAME_OVER_POINTS_TOP = 168
+
+# best results (below the points)
+SCOREBOARD_TOP = 212
+SCOREBOARD_TITLE = "Melhores resultados"
+SCOREBOARD_TITLE_HEIGHT = 26
+SCOREBOARD_ROW_HEIGHT = 22
+SCOREBOARD_FONT_SIZE = 16
+SCOREBOARD_DATE_FORMAT = "%d/%m/%Y"
+SCOREBOARD_TIME_FORMAT = "%H:%M"

@@ -14,13 +14,16 @@ def view(game):
 
 
 def shown(view):
-    """lanes, action bar, letters, points bar, game over points, button, hand button"""
+    """lanes, action bar, letters, touch buttons, points bar, game over points,
+    best results, button, hand button"""
     return (
         view.background.lanes.visible,
         view.action_bar.control.visible,
         view.letters.visible,
+        view.touch_buttons.control.visible,
         view.points_bar.visible,
         view.game_over_points.visible,
+        view.scoreboard.control.visible,
         view.button.control.visible,
         view.hand_button.control.visible,
     )
@@ -36,8 +39,10 @@ def test_layers_in_order(view):
         view.action_bar.control,
         view.background.game_over_banner,
         view.letters,
+        view.touch_buttons.control,
         view.points_bar,
         view.game_over_points,
+        view.scoreboard.control,
         view.button.control,
         view.hand_button.control,
     ]
@@ -46,9 +51,9 @@ def test_layers_in_order(view):
 @pytest.mark.parametrize(
     "page, expected",
     [
-        (GamePage.START, (False, False, False, False, False, True, True)),
-        (GamePage.RUNNING, (True, True, True, True, False, False, False)),
-        (GamePage.GAME_OVER, (False, False, False, False, True, True, True)),
+        (GamePage.START, (False, False, False, False, False, False, False, True, True)),
+        (GamePage.RUNNING, (True, True, True, True, True, False, False, False, False)),
+        (GamePage.GAME_OVER, (False, False, False, False, False, True, True, True, True)),
     ],
 )
 def test_what_each_page_shows(view, page, expected):
@@ -81,6 +86,17 @@ def test_points(view, page, label):
     view.render()
 
     assert getattr(view, label).content.value == "Pontos: 12"
+
+
+def test_best_results_below_the_points_and_above_the_buttons(view):
+    points = view.game_over_points
+    best = view.scoreboard.control
+    best_height = theme.SCOREBOARD_TITLE_HEIGHT + 5 * theme.SCOREBOARD_ROW_HEIGHT
+    banner_bottom = theme.GAME_OVER_BANNER_TOP + theme.GAME_OVER_BANNER_HEIGHT
+
+    assert best.top >= points.top + points.height  # below "Pontos: "
+    assert best.top + best_height <= banner_bottom  # inside the white banner
+    assert banner_bottom <= view.game.button.y  # above the retry button
 
 
 def test_hand_button_below_the_start_button(view):

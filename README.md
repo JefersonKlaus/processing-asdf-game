@@ -17,6 +17,11 @@ below **Iniciar ASDF Hero** / **Falhar novamente**:
 
 The examples below use the left hand keys.
 
+**Phone / tablet:** below the action bar there are 4 touch buttons, one for
+each lane, with the color of the lane and its key. A touch on a button works
+like its key. On small screens the game is made smaller to fit the page (it is
+never made bigger than its size).
+
 Letters (`A`, `S`, `D`, `F`) fall down four lanes. Press the matching key while
 the letter touches the white action bar to score a point (from the moment the
 circle touches the bar until it fully leaves it). Several letters
@@ -33,7 +38,7 @@ letter (the lowest one with that char).
 
 **Swap (from 50 points):** after a random number of letters (between 5 and
 10), a letter that looks normal swaps its char with the next letter when it is
-close to the action bar (100 px). Example: `A` (close to the bar) and `F` (the
+close to the action bar (150 px). Example: `A` (close to the bar) and `F` (the
 next one) -> the first letter shows `F` and the next shows `A`. Both letters
 turn **silver**, and you must press the new chars. Only the chars change, the
 letters stay in their lanes.
@@ -48,6 +53,11 @@ The game is over when:
 - a letter leaves the action bar without being pressed, or
 - you press `A`, `S`, `D` or `F` at the wrong moment: the letter of that key
   is not in the action bar (too early, too late, or another letter is there).
+
+The game over page shows your points and, below them, the **5 best results**
+(position, date, time and points). The result of the game that just ended is
+in **bold**. The results are kept in memory while the server runs (they are
+shared by all the browser tabs, and they are lost when the server stops).
 
 Pressing the same letter again while it is still in the action bar is ignored.
 Other keys (arrows, space, other letters...) and keys on the start / game over
@@ -77,6 +87,7 @@ processing-asdf-game/
 │       │   ├── letter.py        #   Letter: movement and status
 │       │   ├── action_bar.py    #   ActionBar: hit area and highlight
 │       │   ├── button.py        #   Button: clickable area
+│       │   ├── scoreboard.py    #   Scoreboard: the 5 best results (in memory)
 │       │   └── level.py         #   speed / distance by points
 │       └── ui/                  # Flet views, no game rules
 │           ├── theme.py         #   colors, font sizes and texts
@@ -84,7 +95,9 @@ processing-asdf-game/
 │           ├── letter_view.py
 │           ├── action_bar_view.py
 │           ├── background_view.py
-│           └── button_view.py
+│           ├── button_view.py
+│           ├── scoreboard_view.py   #   the 5 best results
+│           └── touch_buttons_view.py   #   the 4 touch buttons (phone)
 └── tests/                       # one responsibility per file (see "Tests")
     ├── conftest.py              # shared fixtures
     ├── helpers.py               # shared helpers (perfect player, frames...)
@@ -155,6 +168,15 @@ play with the `A`, `S`, `D`, `F` keys. Stop the server with `Ctrl+C`.
 
 Example: `FLET_SERVER_IP=0.0.0.0 FLET_SERVER_PORT=8080 python src/main.py`
 
+### Play on a phone
+1. Start the server so other devices on the network can open it:
+   `FLET_SERVER_IP=0.0.0.0 python src/main.py`
+   (Windows PowerShell: `$env:FLET_SERVER_IP="0.0.0.0"; python src/main.py`).
+2. Find the IP of the computer (`ipconfig` on Windows, `ip addr` on Linux,
+   `ipconfig getifaddr en0` on macOS).
+3. On the phone (same Wi-Fi), open `http://<computer IP>:8550` and play with
+   the touch buttons. The firewall of the computer must allow the port 8550.
+
 ### Tuning the game
 All the numbers of the game are in `src/asdf_hero/config.py`, and the colors
 and texts are in `src/asdf_hero/ui/theme.py`.
@@ -179,16 +201,21 @@ points) to the max level (max speed at 75 points, min distance at 100 points):
 | Gold points | `GOLD_POINTS` | `1` | Points for a gold letter (more points also make the game faster) |
 | Swap | `SWAP_FROM_POINTS` | `50` | Points to start the swap challenge |
 | Swap frequency | `SWAP_EVERY_MIN_LETTERS` / `SWAP_EVERY_MAX_LETTERS` | `5` / `10` | Random number of normal letters before each swap |
-| Swap distance | `SWAP_DISTANCE` | `100` px | The letters swap when the circle is this far from the action bar (0.37 s to react at the max speed) |
+| Swap distance | `SWAP_DISTANCE` | `150` px | The letters swap when the circle is this far from the action bar (0.56 s to react at the max speed) |
 | Swap points | `SWAP_POINTS` | `1` | Points for a silver (swapped) letter |
+| Best results | `SCOREBOARD_SIZE` | `5` | Number of best results on the game over page |
+| Touch buttons | `TOUCH_BUTTONS_TOP` / `TOUCH_BUTTON_HEIGHT` / `TOUCH_BUTTON_MARGIN` | `690` / `68` / `2` px | Position and size of the touch buttons (60 x 68 px) |
 | Keys | `LEFT_HAND_KEYS` / `RIGHT_HAND_KEYS` | `ASDF` / `JKLÇ` | Keys of each hand (one for each lane) |
 | Key names | `KEY_ALIASES` | `{";": "Ç"}` | Other names of the same key |
 
 In `ui/theme.py`: the press effect of the action bar is `ACTION_BAR_PULSE`
 (2 px bigger on each side) for `ACTION_BAR_PULSE_FRAMES` frames (8 = 0.13 s),
 the colors of the challenges are `GOLD_COLOR` / `GOLD_GLOW_COLOR` and
-`SILVER_COLOR` / `SILVER_GLOW_COLOR`, and the texts of the hand button are
-`HAND_BUTTON_TEXTS`.
+`SILVER_COLOR` / `SILVER_GLOW_COLOR`, the texts of the hand button are
+`HAND_BUTTON_TEXTS`, and the best results use `SCOREBOARD_DATE_FORMAT`
+(`dd/mm/yyyy`) and `SCOREBOARD_TIME_FORMAT` (`HH:MM`). The touch buttons use
+`TOUCH_BUTTON_FONT_SIZE`, `TOUCH_BUTTON_RADIUS` and
+`TOUCH_BUTTON_PRESSED_OPACITY` (the button is lighter while it is pressed).
 
 To add a new challenge: create a `Challenge` subclass in
 `game/challenges/` (with a `ChallengeSchedule`), and add it to
@@ -238,9 +265,9 @@ src/asdf_hero/config.py                  22      0   100%
 src/asdf_hero/ui/theme.py                23      0   100%
 src/main.py                               6      0   100%
 -------------------------------------------------------------------
-TOTAL                                   633      0   100%
+TOTAL                                   752      0   100%
 Required test coverage of 90.0% reached. Total coverage: 100.00%
-============================= 258 passed in 3.16s ==============================
+============================= 301 passed in 3.44s ==============================
 ```
 
 ### Useful commands
@@ -270,11 +297,13 @@ Each test file has one responsibility:
 | `test_hand.py` | Hand choice (start and game over pages) |
 | `test_letter_flow.py` | New letters, spacing, movement, removal |
 | `test_key_press.py` | Result of a key press: points, game over, yellow / red bar |
-| `test_game_over.py` | Missed letter and the slow motion |
+| `test_game_over.py` | Missed letter, the slow motion, the result goes to the scoreboard |
+| `test_scoreboard.py` | Best results: order, only the best 5, same points |
 | `test_challenge_base.py` | Challenge hooks and the schedule (from N points, after 5-10 letters) |
 | `test_gold_schedule.py` | When and where the gold letter appears |
 | `test_gold_letter.py` | Gold letter: speed, points, game over |
 | `test_swap.py` | Swap challenge: when, which letters, new chars, silver |
+| `test_touch_buttons.py` | Touch buttons: one in each lane, each one is the key of its lane |
 | `test_full_game.py` | Whole games with a perfect player |
 | **`tests/ui/`** | **Flet views** |
 | `test_theme.py` | Color helper and the rules of colors / texts |
@@ -282,13 +311,16 @@ Each test file has one responsibility:
 | `test_action_bar_view.py` | Bar color and the press effect (2 px bigger) |
 | `test_button_view.py` | A button |
 | `test_background_view.py` | Lanes and the game over banner |
-| `test_game_view.py` | Layers and what each page shows (texts, buttons) |
+| `test_game_view.py` | Layers and what each page shows (texts, buttons, best results position) |
+| `test_scoreboard_view.py` | Best results: position, date, time, points, last game in bold |
+| `test_touch_buttons_view.py` | Touch buttons: lane colors, keys, pressed button |
 | `test_game_view_letters.py` | One view for each letter (kept, removed, gold on top) |
 | **`tests/app/`** | **Flet app** |
-| `test_page_setup.py` | Page settings, events, `main()` |
+| `test_page_setup.py` | Page settings, events, `main()`, best results shared by all tabs |
 | `test_input.py` | Keys / clicks are queued and applied by the game loop |
 | `test_game_loop.py` | Frame order (input -> update -> render), frame rate, slow frames, errors |
 | `test_lifecycle.py` | Tab connect / disconnect (pause) / close (stop) |
+| `test_screen_fit.py` | The game is made smaller to fit small pages (phones) |
 | `test_main.py` | `python src/main.py` (server settings, assets) |
 
 - **Rules without mocks:** `Game` receives the random generator (`rng`), so
