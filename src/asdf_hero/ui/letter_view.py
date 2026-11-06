@@ -1,4 +1,4 @@
-"""Shows a letter: a colored circle, a white circle inside and the char."""
+"""Shows a letter: a colored circle with a glow, a white circle inside, the char."""
 
 import flet as ft
 
@@ -6,12 +6,21 @@ from asdf_hero.game.letter import Letter
 from asdf_hero.game.states import LetterStatus
 from asdf_hero.ui import theme
 
-GOLD_GLOW = ft.BoxShadow(
-    blur_radius=theme.GLOW_BLUR, spread_radius=2, color=theme.GOLD_GLOW_COLOR
+
+def _glow(
+    color: str, blur: float = theme.GLOW_BLUR, spread: float = theme.GLOW_SPREAD
+) -> ft.BoxShadow:
+    return ft.BoxShadow(blur_radius=blur, spread_radius=spread, color=color)
+
+
+# the same design for every letter, in its color: a big glow for the special
+# letters (gold, silver), a small one for the normal letters
+LANE_GLOWS = tuple(
+    _glow(color, theme.LANE_GLOW_BLUR, theme.LANE_GLOW_SPREAD)
+    for color in theme.LANE_GLOW_COLORS
 )
-SILVER_GLOW = ft.BoxShadow(
-    blur_radius=theme.GLOW_BLUR, spread_radius=2, color=theme.SILVER_GLOW_COLOR
-)
+GOLD_GLOW = _glow(theme.GOLD_GLOW_COLOR)
+SILVER_GLOW = _glow(theme.SILVER_GLOW_COLOR)
 
 
 class LetterView:
@@ -28,7 +37,7 @@ class LetterView:
         # flet controls with the same values are equal (==): the unique key
         # makes sure that two letters are never mixed up
         self.control = ft.Container(
-            key="letter-%d" % letter.id,
+            key=f"letter-{letter.id}",
             width=letter.size,
             height=letter.size,
             shape=ft.BoxShape.CIRCLE,
@@ -39,13 +48,14 @@ class LetterView:
             ),
         )
 
-    def _color_and_glow(self) -> tuple[str, ft.BoxShadow | None]:
-        """Gold letter: gold. Swapped letter: silver. Other letters: the lane color."""
+    def _color_and_glow(self) -> tuple[str, ft.BoxShadow]:
+        """Gold letter: gold. Silver letter: silver. Other letters: the lane color."""
         if self.letter.gold:
             return theme.GOLD_COLOR, GOLD_GLOW
-        if self.letter.swapped:
+        if self.letter.silver:
             return theme.SILVER_COLOR, SILVER_GLOW
-        return theme.LANE_COLORS[self.letter.lane], None
+        lane = self.letter.lane
+        return theme.LANE_COLORS[lane], LANE_GLOWS[lane]
 
     def render(self) -> None:
         letter, status = self.letter, self.letter.status
@@ -66,7 +76,7 @@ class LetterView:
         self._inner_circle.bgcolor = color if pressed else theme.WHITE
         self._inner_circle.border = self._stroke if failed else None
 
-        # char (it can change: swap challenge)
+        # char (it can change: silver letter)
         self._label.value = letter.char
         self._label.color = {
             LetterStatus.WAITING: theme.BLACK,

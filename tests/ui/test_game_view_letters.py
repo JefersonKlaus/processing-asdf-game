@@ -22,7 +22,7 @@ def test_one_view_for_each_letter(view, running_game, place_letter):
 
     view.render()
 
-    assert keys(view) == ["letter-%d" % first.id, "letter-%d" % second.id]
+    assert keys(view) == [f"letter-{first.id}", f"letter-{second.id}"]
 
 
 def test_views_are_kept_between_frames(view, running_game):
@@ -45,7 +45,7 @@ def test_removed_letters_leave_the_screen(view, running_game, place_letter):
     running_game.letters.remove(gone)
     view.render()
 
-    assert keys(view) == ["letter-%d" % kept.id]
+    assert keys(view) == [f"letter-{kept.id}"]
 
 
 def test_gold_letters_are_drawn_on_top(view, running_game, place_letter):
@@ -54,7 +54,7 @@ def test_gold_letters_are_drawn_on_top(view, running_game, place_letter):
 
     view.render()
 
-    assert keys(view) == ["letter-%d" % normal.id, "letter-%d" % gold.id]
+    assert keys(view) == [f"letter-{normal.id}", f"letter-{gold.id}"]
 
 
 def test_list_is_not_replaced_when_nothing_changes(view, running_game, place_letter):

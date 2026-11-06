@@ -10,11 +10,15 @@ import os
 
 import flet as ft
 
+from asdf_hero import config, storage
 from asdf_hero.app import main
+from asdf_hero.logs import setup_logging
 
 ASSETS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets")
 
 if __name__ == "__main__":
+    # logs: console and a file in the data folder (see "Logs" in README.md)
+    setup_logging(storage.data_dir() / config.LOG_FILE)
     ft.run(
         main,
         view=ft.AppView.WEB_BROWSER,

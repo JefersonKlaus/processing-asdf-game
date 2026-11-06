@@ -12,11 +12,12 @@ def test_left_hand_by_default(game):
     assert game.keys == ("A", "S", "D", "F")
 
 
-def test_hand_button_below_the_start_button(game):
+def test_hand_button_above_the_start_button(game):
+    # the start button (main action) is the lowest one (mobile thumb zone)
     start, hand = game.button, game.hand_button
 
-    assert (hand.x, hand.width) == (start.x, start.width)
-    assert hand.y == start.y + start.height + config.BUTTON_GAP
+    assert (hand.x, hand.width, hand.height) == (start.x, start.width, start.height)
+    assert start.y == hand.y + hand.height + config.BUTTON_GAP
 
 
 @pytest.mark.parametrize("page", [GamePage.START, GamePage.GAME_OVER])

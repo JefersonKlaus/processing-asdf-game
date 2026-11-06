@@ -80,22 +80,62 @@ def test_colors_follow_the_status():
 
 
 @pytest.mark.parametrize(
-    "gold, swapped, glow",
-    [(False, False, None), (True, False, theme.GOLD_GLOW_COLOR), (False, True, theme.SILVER_GLOW_COLOR)],
+    "gold, silver, glow",
+    [
+        (False, False, theme.LANE_GLOW_COLORS[0]),
+        (True, False, theme.GOLD_GLOW_COLOR),
+        (False, True, theme.SILVER_GLOW_COLOR),
+    ],
     ids=["normal", "gold", "silver"],
 )
-def test_glow_of_the_challenges(gold, swapped, glow):
+def test_every_letter_glows_in_its_color(gold, silver, glow):
     view, outer, _, _ = render(gold=gold)
-    view.letter.swapped = swapped
+    view.letter.silver = silver
     view.render()
 
-    assert (outer.shadow.color if outer.shadow else None) == glow
+    assert outer.shadow.color == glow
 
 
-def test_swapped_letter_is_silver_with_the_new_char():
+@pytest.mark.parametrize("lane", range(4))
+def test_normal_letters_have_a_smaller_glow_in_the_lane_color(lane):
+    _, outer, _, _ = render(lane=lane)
+    _, gold_outer, _, _ = render(lane=lane, gold=True)
+
+    # the glow of the gold letter, smaller (the special letters stand out)...
+    assert outer.shadow.blur_radius < gold_outer.shadow.blur_radius
+    assert outer.shadow.spread_radius < gold_outer.shadow.spread_radius
+    # ...in the color of the lane (the colors are kept)
+    assert outer.bgcolor == theme.LANE_COLORS[lane]
+    assert outer.shadow.color == theme.with_alpha(
+        theme.LANE_COLORS[lane], theme.LANE_GLOW_ALPHA
+    )
+
+
+def test_silver_letter_has_the_big_glow():
+    view, outer, _, _ = render()
+    view.letter.silver = True
+    view.render()
+
+    assert (outer.shadow.blur_radius, outer.shadow.spread_radius) == (
+        theme.GLOW_BLUR,
+        theme.GLOW_SPREAD,
+    )
+
+
+def test_glow_turns_silver_with_the_letter():
+    view, outer, _, _ = render(lane=2)
+    assert outer.shadow.color == theme.LANE_GLOW_COLORS[2]
+
+    view.letter.silver = True
+    view.render()
+
+    assert outer.shadow.color == theme.SILVER_GLOW_COLOR
+
+
+def test_silver_letter_with_the_new_char():
     view, outer, _, label = render(lane=0)  # "A"
 
-    view.letter.char, view.letter.swapped = "F", True
+    view.letter.char, view.letter.silver = "F", True
     view.render()
 
     assert (outer.bgcolor, label.value) == (theme.SILVER_COLOR, "F")

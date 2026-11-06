@@ -7,6 +7,7 @@ class GamePage(Enum):
     START = 1
     RUNNING = 2
     GAME_OVER = 3
+    CONGRATULATIONS = 4  # new best result: the player types the name
 
 
 class Hand(Enum):

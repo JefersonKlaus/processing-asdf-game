@@ -4,15 +4,19 @@ import asyncio
 from types import SimpleNamespace
 from unittest import mock
 
+import flet as ft
+
 REAL_SLEEP = asyncio.sleep
 
 
 class FakePage:
     """The parts of ft.Page used by the app."""
 
-    def __init__(self, width=None, height=None):
+    def __init__(self, width=None, height=None, platform=None, languages=()):
         self.width = width  # size of the browser page (None: unknown)
         self.height = height
+        self.platform = platform  # ft.PagePlatform (None: unknown, a computer)
+        self.languages = list(languages)  # languages of the device ("pt", "en")
         self.controls = []
         self.updates = 0
         self.visible_waits = 0
@@ -28,6 +32,9 @@ class FakePage:
 
     async def wait_until_visible(self):
         self.visible_waits += 1
+
+    async def get_device_info(self):
+        return SimpleNamespace(locales=[ft.Locale(code) for code in self.languages])
 
 
 class FakeClock:

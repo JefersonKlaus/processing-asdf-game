@@ -16,7 +16,7 @@ def run_script(monkeypatch, **env):
         monkeypatch.delenv(name, raising=False)
     for name, value in env.items():
         monkeypatch.setenv(name, value)
-    with mock.patch("flet.run") as run:
+    with mock.patch("flet.run") as run, mock.patch("asdf_hero.logs.setup_logging"):
         namespace = runpy.run_path(MAIN, run_name="__main__")
     return run, namespace
 
@@ -45,6 +45,13 @@ def test_background_image_is_in_the_assets(monkeypatch):
 
     path = os.path.join(namespace["ASSETS_DIR"], theme.BACKGROUND_IMAGE)
     assert os.path.isfile(path)
+
+
+def test_logs_in_the_data_folder(monkeypatch, app_data_dir):
+    with mock.patch("flet.run"), mock.patch("asdf_hero.logs.setup_logging") as setup:
+        runpy.run_path(MAIN, run_name="__main__")
+
+    setup.assert_called_once_with(app_data_dir / "asdf_hero.log")
 
 
 def test_importing_does_not_start_the_server():

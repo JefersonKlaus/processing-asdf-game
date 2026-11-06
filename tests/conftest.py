@@ -4,12 +4,30 @@ import random
 
 import pytest
 
-from asdf_hero import config
+from asdf_hero import config, storage
+from asdf_hero.app import shared_scoreboard
 from asdf_hero.game import Game, Letter, LetterStatus
+from asdf_hero.logs import stop_logging
+
+
+@pytest.fixture(autouse=True)
+def app_data_dir(tmp_path, monkeypatch):
+    """The database of the tests is in a temporary folder (never the real one)."""
+    monkeypatch.setenv(storage.APP_DATA_ENV, str(tmp_path))
+    shared_scoreboard.cache_clear()
+    yield tmp_path
+    shared_scoreboard.cache_clear()
+    stop_logging()  # a test that set up the logs: close the file
 
 
 class ScriptedRandom(random.Random):
     """A Random whose randrange() returns the given values (then 0)."""
+
+    def __new__(cls, *args, **kwargs):
+        # random.Random.__new__ seeds itself with the constructor arguments
+        # before __init__ runs (on Python 3.10 it crashes on a list: "unhashable
+        # type"). Values are only for randrange() below, never for seeding.
+        return super().__new__(cls)
 
     def __init__(self, values=()):
         super().__init__(0)

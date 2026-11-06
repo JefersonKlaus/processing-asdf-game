@@ -11,9 +11,10 @@
 # cli:  the `flet` command (flet build / flet debug)
 flet[web,cli]==1.0.5
 
-# --- test -------------------------------------------------------------------
+# --- test and lint ------------------------------------------------------------
 pytest>=7.0
 pytest-cov>=4.0
+ruff==0.17.3
 
 # --- build a mobile app: tools that are not Python packages -------------------
 # Android (apk / aab), on Windows, macOS or Linux: Flutter SDK, Java JDK and

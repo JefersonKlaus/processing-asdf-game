@@ -12,7 +12,8 @@ coverage.xml
 venv/
 .venv/
 
-# packaging
+# packaging (flet build writes to build/)
 *.egg-info/
 build/
 dist/
+build.log

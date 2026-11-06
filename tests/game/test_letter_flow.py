@@ -45,6 +45,23 @@ def test_next_letter_after_the_distance(running_game, place_letter, last_y, coun
     assert len(running_game.letters) == count
 
 
+def test_new_letter_exactly_at_the_distance(running_game, place_letter):
+    last = place_letter(running_game, 0, y=SPACING + 1.5)  # passed it by 1.5 px
+
+    running_game.update()
+
+    new = running_game.letters[-1]
+    assert last.y - new.y == SPACING  # not SPACING + 1.5
+
+
+def test_new_letter_always_starts_at_the_top(running_game, place_letter):
+    place_letter(running_game, 0, y=500)  # far away (the distance got smaller)
+
+    running_game.update()
+
+    assert running_game.letters[-1].y == 2 * running_game.speed  # at the top, moved once
+
+
 def test_distance_depends_on_the_level(running_game, place_letter):
     running_game.distance = 100
     place_letter(running_game, 0, y=100 + config.LETTER_SIZE)

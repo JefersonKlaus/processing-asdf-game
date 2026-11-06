@@ -56,26 +56,48 @@ def test_letter_half_inside_the_bar_can_be_pressed(running_game, place_letter):
     assert running_game.transition_to_game_over is False
 
 
-def test_point_levels_up(running_game, place_letter):
+def test_point_levels_up_faster_first(running_game, place_letter):
     place_letter(running_game, 1, y=640, status=NEED)
 
     running_game.key_pressed("s")
 
     assert running_game.speed > config.INIT_SPEED
-    assert running_game.distance < config.INIT_DISTANCE
+    assert running_game.distance == config.INIT_DISTANCE  # not more letters yet
 
 
-def test_one_press_hits_only_the_lowest_letter(running_game, place_letter):
+def test_point_after_the_max_speed_adds_letters(running_game, place_letter):
+    set_points(running_game, config.MAX_SPEED_FROM_POINTS)
+    place_letter(running_game, 1, y=640, status=NEED)
+
+    running_game.key_pressed("s")
+
+    assert running_game.speed == config.MAX_SPEED  # not faster
+    assert running_game.distance < config.INIT_DISTANCE  # closer letters
+
+
+def test_one_press_hits_all_the_letters_of_the_key(running_game, place_letter):
     # two letters with the same char in the bar (the gold letter can pass)
     upper = place_letter(running_game, 0, y=600, status=NEED)
     lower = place_letter(running_game, 1, y=690, status=NEED, char="A")
 
     running_game.key_pressed("a")
-    assert (lower.status, upper.status) == (PRESSED, NEED)
+
+    assert (lower.status, upper.status) == (PRESSED, PRESSED)
+    assert running_game.points == 2  # the points of both
+
+    running_game.key_pressed("a")  # again: both were pressed, nothing changes
+    assert running_game.points == 2
+    assert running_game.transition_to_game_over is False
+
+
+def test_other_letters_in_the_bar_are_not_hit(running_game, place_letter):
+    a = place_letter(running_game, 0, y=620, status=NEED)
+    s = place_letter(running_game, 1, y=660, status=NEED)
 
     running_game.key_pressed("a")
-    assert upper.status == PRESSED
-    assert running_game.points == 2
+
+    assert (a.status, s.status) == (PRESSED, NEED)
+    assert running_game.points == 1
 
 
 @pytest.mark.parametrize("page", [GamePage.START, GamePage.GAME_OVER])

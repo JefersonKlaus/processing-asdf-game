@@ -14,12 +14,20 @@ def test_initial_state(game):
     assert game.transition_to_game_over is False
 
 
-def test_button_in_the_center_of_the_screen():
+def test_button_centered_at_the_bottom_of_the_screen():
     game = Game(width=400, height=600)
 
     button = game.button
-    assert (button.x, button.y) == (100, 260)
+    assert button.x + button.width / 2 == 200  # centered
+    assert button.y + button.height == 600 - config.BUTTONS_BOTTOM_MARGIN
     assert (button.width, button.height) == (config.BUTTON_WIDTH, config.BUTTON_HEIGHT)
+
+
+def test_buttons_follow_the_mobile_touch_size():
+    # Material: touch targets of at least 48 dp (Apple: 44 pt), with space
+    assert config.BUTTON_HEIGHT >= 48
+    assert config.BUTTON_GAP >= 8
+    assert config.BUTTON_WIDTH <= config.WIDTH - 2 * 20  # margins on the narrowest game
 
 
 def test_each_game_has_its_own_state():
@@ -74,7 +82,7 @@ def test_new_game_is_clean(game, place_letter):
     game.transition_to_game_over = True
     game.slow_motion_steps = 5
     game.gold.schedule.letters_left, game.gold.pending = 3, True
-    game.swap.schedule.letters_left = 4
+    game.silver.schedule.letters_left = 4
     game.action_bar.press(correct=False)
 
     game.mouse_pressed(*center(game.button))
@@ -84,5 +92,5 @@ def test_new_game_is_clean(game, place_letter):
     assert (game.speed, game.distance) == (config.INIT_SPEED, config.INIT_DISTANCE)
     assert (game.transition_to_game_over, game.slow_motion_steps) == (False, 0)
     assert (game.gold.schedule.letters_left, game.gold.pending) == (None, False)
-    assert game.swap.schedule.letters_left is None
+    assert game.silver.schedule.letters_left is None
     assert game.action_bar.highlight == Highlight.NONE

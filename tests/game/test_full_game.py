@@ -4,7 +4,7 @@ import random
 
 from asdf_hero import config
 from asdf_hero.game import Game, GamePage
-from tests.helpers import GAME_OVER_FRAMES, center, play, set_points
+from tests.helpers import GAME_OVER_FRAMES, center, fill_scoreboard, play, set_points
 
 
 def test_play_level_up_and_lose(game):
@@ -16,7 +16,12 @@ def test_play_level_up_and_lose(game):
     assert len(game.letters) >= 3  # more than one letter at the same time
 
     play(game, 60 * 30, press=False)  # stop playing
+    assert game.page == GamePage.CONGRATULATIONS  # first game: a best result
+
+    game.type_name("Ana")
+    game.mouse_pressed(*center(game.save_button))
     assert game.page == GamePage.GAME_OVER
+    assert game.scoreboard.best == [game.last_result]
 
     game.mouse_pressed(*center(game.button))  # retry: slow again
     assert game.page == GamePage.RUNNING
@@ -24,6 +29,7 @@ def test_play_level_up_and_lose(game):
 
 
 def test_wrong_press_ends_the_game(game):
+    fill_scoreboard(game.scoreboard)  # not a best result: game over page
     game.mouse_pressed(*center(game.button))
     play(game, 60 * 10)
     points = game.points
@@ -38,13 +44,13 @@ def test_wrong_press_ends_the_game(game):
 def test_challenges_in_a_perfect_game():
     game = Game(rng=random.Random(3))
     game.start_new_game()
-    set_points(game, config.SWAP_FROM_POINTS)  # gold and swap challenges
+    set_points(game, config.SILVER_FROM_POINTS)  # gold and silver letters
     between, normal_count, seen, silver = [], 0, set(), set()
 
     for _ in range(60 * 2):  # 2 minutes, one second at a time
         play(game, 60)
         assert game.page == GamePage.RUNNING  # a perfect player never loses
-        silver.update(letter.id for letter in game.letters if letter.swapped)
+        silver.update(letter.id for letter in game.letters if letter.silver)
         for letter in game.letters:
             if letter.id not in seen:
                 seen.add(letter.id)
@@ -56,4 +62,4 @@ def test_challenges_in_a_perfect_game():
 
     assert len(between) >= 5
     assert all(5 <= count <= 10 for count in between)  # gold every 5-10 letters
-    assert len(silver) >= 10  # swapped letters (two for each swap)
+    assert len(silver) >= 10  # silver letters (two for each challenge)

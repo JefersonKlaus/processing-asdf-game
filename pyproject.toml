@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "asdf-hero"
-version = "1.0.0"
+version = "1.1.0"
 description = "ASDF Hero: press A, S, D, F when the letters reach the action bar."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -14,7 +14,7 @@ dependencies = ["flet==1.0.5"]
 [project.optional-dependencies]
 web = ["flet[web]==1.0.5"]  # web server: python src/main.py
 build = ["flet[cli]==1.0.5"]  # `flet build` (mobile / desktop / web apps)
-dev = ["flet[web]==1.0.5", "pytest>=7.0", "pytest-cov>=4.0"]
+dev = ["flet[web]==1.0.5", "pytest>=7.0", "pytest-cov>=4.0", "ruff==0.17.3"]
 
 [tool.setuptools.packages.find]
 where = ["src"]
@@ -26,9 +26,30 @@ product = "ASDF Hero"  # name of the app on the phone
 # the iOS bundle id are "<org>.<project name>", for example com.example.asdf_hero
 org = "com.example"
 description = "Press A, S, D, F when the letters reach the action bar."
+# the version shown on the phone is [project] version; build_number is the
+# internal version (Android versionCode): raise it for every new release
+build_number = 1
 
 [tool.flet.app]
-path = "src"
+path = "src"  # only src/ goes into the app (no tests, docs, .venv)
+module = "main"  # entry point: src/main.py
+
+# --- Android (flet build apk / flet build aab) -------------------------------
+# See "Build the Android app" in README.md.
+[tool.flet.android]
+# false: one APK that works on every phone (and on the x86_64 emulator).
+# For a smaller APK for most phones use `flet build apk --arch arm64-v8a`.
+split_per_abi = false
+
+[tool.flet.android.gradle_properties]
+# Memory of the Android build (Gradle). The Flet default (-Xmx8G) fails on
+# computers with 8 GB of RAM or less. If the build fails with
+# "OutOfMemoryError: Java heap space", raise -Xmx (for example to -Xmx6G).
+"org.gradle.jvmargs" = "-Xmx4G -XX:MaxMetaspaceSize=2G -XX:ReservedCodeCacheSize=512m -XX:+HeapDumpOnOutOfMemoryError"
+
+# --- lint (ruff check; see .github/workflows/ci.yml) -------------------------
+[tool.ruff]
+target-version = "py310"  # same as [project] requires-python
 
 # --- tests ------------------------------------------------------------------
 [tool.pytest.ini_options]

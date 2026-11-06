@@ -1,4 +1,4 @@
-"""ScoreboardView: position, date, time and points of the best results."""
+"""ScoreboardView: position, name, date, time and points of the best results."""
 
 from datetime import datetime
 
@@ -8,6 +8,7 @@ import pytest
 from asdf_hero.game import Scoreboard
 from asdf_hero.ui import theme
 from asdf_hero.ui.scoreboard_view import ScoreboardView
+from asdf_hero.ui.texts import ENGLISH
 
 
 @pytest.fixture
@@ -49,15 +50,15 @@ def test_empty_scoreboard_shows_no_rows(view):
     assert visible_rows(view) == []
 
 
-def test_position_date_time_and_points(view, board):
-    board.add(87, datetime(2025, 3, 5, 14, 7))
-    board.add(120, datetime(2025, 12, 24, 9, 30))
+def test_position_name_date_time_and_points(view, board):
+    board.add(87, datetime(2025, 3, 5, 14, 7), "Ana")
+    board.add(120, datetime(2025, 12, 24, 9, 30), "Bruno")
 
     view.render(visible=True)
 
     assert [texts(row) for row in visible_rows(view)] == [
-        ["1.", "24/12/2025", "09:30", "120"],
-        ["2.", "05/03/2025", "14:07", "87"],
+        ["1.", "Bruno", "24/12/2025", "09:30", "120"],
+        ["2.", "Ana", "05/03/2025", "14:07", "87"],
     ]
 
 
@@ -81,6 +82,49 @@ def test_rows_follow_the_scoreboard(view, board):
     assert len(visible_rows(view)) == 1
 
 
+def test_empty_scoreboard_shows_a_message(view, board):
+    view.render(visible=True)
+    assert view.empty.visible is True
+    assert view.empty.value == "Nenhum resultado ainda"
+
+    board.add(10, datetime(2025, 3, 5, 14, 0))
+    view.render(visible=True)
+    assert view.empty.visible is False
+
+
+def test_message_below_the_title(view):
+    assert view.control.content.controls[:2] == [view.title, view.empty]
+
+
+def test_anonymous_result(view, board):
+    board.add(10, datetime(2025, 3, 5, 14, 0), "")
+
+    view.render(visible=True)
+
+    assert texts(view.rows[0])[1] == "Anônimo"
+
+
+def test_in_english(board):
+    view = ScoreboardView(board, width=282, texts=ENGLISH)
+    board.add(120, datetime(2025, 12, 24, 9, 30), "")
+
+    view.render(visible=True)
+
+    assert view.title.content.value == "Best results"
+    assert texts(view.rows[0]) == ["1.", "Anonymous", "12/24/2025", "09:30", "120"]
+
+
 def test_points_are_aligned_to_the_right(view):
-    assert view.rows[0].controls[3].text_align == ft.TextAlign.RIGHT
+    assert view.rows[0].controls[-1].text_align == ft.TextAlign.RIGHT
     assert view.rows[0].controls[0].size == theme.SCOREBOARD_FONT_SIZE
+
+
+def test_long_names_end_with_ellipsis(view):
+    name_cell = view.rows[0].controls[1]
+
+    assert name_cell.overflow == ft.TextOverflow.ELLIPSIS
+    assert name_cell.no_wrap is True
+
+
+def test_the_columns_fit_the_game_width():
+    assert sum(theme.SCOREBOARD_COLUMNS) <= 282

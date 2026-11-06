@@ -5,7 +5,7 @@ from datetime import datetime
 
 from asdf_hero import config
 from asdf_hero.game import Game, GamePage, LetterStatus, Scoreboard
-from tests.helpers import GAME_OVER_FRAMES, frames
+from tests.helpers import GAME_OVER_FRAMES, fill_scoreboard, frames
 
 
 def test_missed_letter_starts_the_transition(running_game, place_letter):
@@ -30,6 +30,7 @@ def test_slow_motion_moves_one_step_every_some_frames(running_game, place_letter
 
 
 def test_game_over_page_after_the_slow_motion(running_game):
+    fill_scoreboard(running_game.scoreboard)  # not a best result
     running_game.transition_to_game_over = True
 
     frames(running_game, GAME_OVER_FRAMES - 1)
@@ -39,7 +40,7 @@ def test_game_over_page_after_the_slow_motion(running_game):
     assert running_game.page == GamePage.GAME_OVER
 
 
-def test_the_result_goes_to_the_scoreboard():
+def test_a_best_result_shows_the_congratulations_page():
     when = datetime(2025, 3, 5, 14, 30)
     board = Scoreboard()
     game = Game(rng=random.Random(0), scoreboard=board, clock=lambda: when)
@@ -48,17 +49,15 @@ def test_the_result_goes_to_the_scoreboard():
 
     game.key_pressed("a")  # wrong moment
     frames(game, GAME_OVER_FRAMES - 1)
-    assert board.best == []  # only when the game over page shows
+    assert game.page == GamePage.RUNNING  # after the slow motion
 
     game.update()
-    assert [(r.points, r.when) for r in board.best] == [(42, when)]
-    assert game.last_result is board.best[0]
-
-    frames(game, 100)  # only once
-    assert len(board.best) == 1
+    assert game.page == GamePage.CONGRATULATIONS
+    assert board.best == []  # saved with the name (see test_congratulations.py)
 
 
 def test_points_are_kept(running_game):
+    fill_scoreboard(running_game.scoreboard)  # not a best result
     running_game.points = 7
 
     running_game.key_pressed("d")  # wrong moment

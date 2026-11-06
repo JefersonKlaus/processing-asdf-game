@@ -23,15 +23,21 @@ class Letter:
     _ids = itertools.count()
 
     def __init__(
-        self, lane: int, char: str, action_bar: ActionBar, gold: bool = False
+        self,
+        lane: int,
+        char: str,
+        action_bar: ActionBar,
+        gold: bool = False,
+        x: float | None = None,
     ) -> None:
         self.id = next(Letter._ids)  # unique: two letters are never mixed up
         self.lane = lane
         self.char = char
         self.gold = gold  # surprise letter: falls faster than the others
-        self.will_swap = False  # swap challenge: swaps near the action bar
-        self.swapped = False  # swapped its char with another letter (silver)
-        self.x = config.LANE_CENTERS[lane]  # center of the circle
+        self.will_swap = False  # silver letter challenge: it will swap its char
+        self.silver = False  # silver letter: it swaps (or swapped) its char
+        # center of the circle (the game gives it: wider games, wider lanes)
+        self.x = config.LANE_CENTERS[lane] if x is None else x
         self.y = 0.0
         self.status = LetterStatus.WAITING
         self._action_bar = action_bar

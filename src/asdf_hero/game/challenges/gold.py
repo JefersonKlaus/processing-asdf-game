@@ -56,4 +56,4 @@ class GoldChallenge(Challenge):
         lanes = lanes or list(range(len(config.LANE_CENTERS)))
         lane = lanes[self.rng.randrange(len(lanes))]
         char = game.keys[self.rng.randrange(len(game.keys))]
-        return Letter(lane, char, game.action_bar, gold=True)
+        return Letter(lane, char, game.action_bar, gold=True, x=game.lane_centers[lane])

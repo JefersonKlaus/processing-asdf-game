@@ -1,5 +1,7 @@
 """Helpers used by the tests."""
 
+from datetime import datetime
+
 from asdf_hero import config
 from asdf_hero.game import GamePage, LetterStatus
 
@@ -14,6 +16,12 @@ def frames(game, count):
 
 def center(button):
     return (button.x + button.width / 2, button.y + button.height / 2)
+
+
+def fill_scoreboard(board, points=1000):
+    """Full best results: a new game does not enter them (no congratulations)."""
+    for minute in range(board.size):
+        board.add(points, datetime(2025, 1, 1, 10, minute), "Old")
 
 
 def set_points(game, points):
